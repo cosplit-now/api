@@ -34,6 +34,7 @@ export class S3Service {
     });
   }
 
+  // 弃用
   async uploadImage(
     key: string,
     body: Buffer,
@@ -51,7 +52,18 @@ export class S3Service {
     return this.getPublicUrl(key);
   }
 
+  // 生成用于上传的签名 URL
   async getSignedUrl(key: string, expiresIn = 3600): Promise<string> {
+    const command = new PutObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+    });
+
+    return getSignedUrl(this.client, command, { expiresIn });
+  }
+
+  // 生成用于下载的签名 URL
+  async getDownloadUrl(key: string, expiresIn = 3600): Promise<string> {
     const command = new GetObjectCommand({
       Bucket: this.bucket,
       Key: key,

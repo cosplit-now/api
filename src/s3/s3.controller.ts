@@ -18,6 +18,7 @@ import { S3Service } from "./s3.service";
 export class S3Controller {
   constructor(private readonly s3Service: S3Service) {}
 
+  // 弃用
   @Post("upload")
   @AllowAnonymous()
   @HttpCode(HttpStatus.OK)
@@ -40,17 +41,21 @@ export class S3Controller {
     };
   }
 
-  @Get("signed-url/:key")
+  @Post("signed-url")
   @AllowAnonymous()
-  async getSignedUrl(@Param("key") key: string) {
+  // 上传用。前端传文件名，后端生成时间戳+原名，返回签名 URL
+  async getSignedUrl(@Body("filename") filename: string) {
+    const key = `${Date.now()}-${filename}`;
     const url = await this.s3Service.getSignedUrl(key);
 
     return {
       success: true,
       url,
+      key,
     };
   }
 
+  //暂时不用
   @Delete(":key")
   @AllowAnonymous()
   async deleteImage(@Param("key") key: string) {
