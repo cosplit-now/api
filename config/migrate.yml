@@ -1,0 +1,60 @@
+service: cosplit-api
+image: cosplit-now/cosplit-api
+primary_role: migrate
+
+servers:
+  migrate:
+    hosts:
+      - ovh-ca
+    proxy: false
+
+registry:
+  server: ghcr.io
+  username: cosplit-now
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+builder:
+  arch: amd64
+  dockerfile: Dockerfile.migrate
+  # Pass in additional build args needed for your Dockerfile.
+  # args:
+  #   RUBY_VERSION: <%= ENV["RBENV_VERSION"] || ENV["rvm_ruby_string"] || "#{RUBY_ENGINE}-#{RUBY_ENGINE_VERSION}" %>
+
+env:
+  clear:
+    NODE_ENV: production
+  secret:
+    - DATABASE_URL
+    - BETTER_AUTH_SECRET
+    - BETTER_AUTH_URL
+
+# Aliases are triggered with "bin/kamal <alias>". You can overwrite arguments on invocation:
+# "bin/kamal app logs -r job" will tail logs from the first server in the job section.
+#
+# aliases:
+#   shell: app exec --interactive --reuse "bash"
+
+ssh:
+  user: debian
+  keys_only: false
+  keys: ["~/.ssh/id_ed25519_ovh.pub"]
+
+# Use a persistent storage volume.
+#
+# volumes:
+#   - "app_storage:/app/storage"
+
+# Bridge fingerprinted assets, like JS and CSS, between versions to avoid
+# hitting 404 on in-flight requests. Combines all files from new and old
+# version inside the asset_path.
+#
+# asset_path: /app/public/assets
+
+# Configure rolling deploys by setting a wait time between batches of restarts.
+#
+# boot:
+#   limit: 10 # Can also specify as a percentage of total hosts, such as "25%"
+#   wait: 2
+
+# Use accessory services (secrets come from .kamal/secrets).
