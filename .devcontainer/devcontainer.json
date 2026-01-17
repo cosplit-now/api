@@ -23,7 +23,9 @@
 				"jasonlhy.hungry-delete",
 				"oderwat.indent-rainbow",
 				"esbenp.prettier-vscode",
-				"Gruntfuggly.todo-tree"
+				"Gruntfuggly.todo-tree",
+				"Prisma.prisma",
+				"xicunyang.ts-space-prompt"
 			]
 		}
 	}
