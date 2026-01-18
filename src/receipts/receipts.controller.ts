@@ -11,9 +11,10 @@ import {
 import { ReceiptsService } from "./receipts.service";
 import { CreateReceiptDto } from "./dto/create-receipt.dto";
 import { UpdateReceiptDto } from "./dto/update-receipt.dto";
-import { type UserSession } from "@thallesp/nestjs-better-auth";
+import { AllowAnonymous, type UserSession } from "@thallesp/nestjs-better-auth";
 
 @Controller("receipts")
+@AllowAnonymous()
 export class ReceiptsController {
   constructor(private readonly receiptsService: ReceiptsService) {}
 
