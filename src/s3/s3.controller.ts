@@ -1,7 +1,6 @@
 import {
   Controller,
   Post,
-  Get,
   Delete,
   Body,
   Param,
@@ -25,13 +24,13 @@ export class S3Controller {
   @UseInterceptors(FileInterceptor("file"))
   async uploadImage(
     @UploadedFile() file: Express.Multer.File,
-    @Body("key") key?: string
+    @Body("key") key?: string,
   ) {
     const imageKey = key || `${Date.now()}-${file.originalname}`;
     const url = await this.s3Service.uploadImage(
       imageKey,
       file.buffer,
-      file.mimetype
+      file.mimetype,
     );
 
     return {
