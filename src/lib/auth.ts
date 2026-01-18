@@ -7,7 +7,7 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
-  trustedOrigins: ["http://localhost:5173"],
+  trustedOrigins: ["http://localhost:5173", "https://cosplit.xinqi.mu"],
   plugins: [
     anonymous({
       onLinkAccount: ({ anonymousUser, newUser }) => {
