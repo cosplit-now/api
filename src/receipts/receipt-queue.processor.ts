@@ -29,6 +29,7 @@ export class ReceiptQueueProcessor extends WorkerHost {
           data: { status: "ocr_done", ocrResult: JSON.stringify(receiptItems) },
         });
       } catch (e) {
+        console.log("receipt ocr failed", e);
         await this.prisma.demoReceipt.update({
           where: { id: job.data.receiptId },
           data: { status: "ocr_failed" },
