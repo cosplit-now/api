@@ -50,6 +50,7 @@ env:
     - R2_ACCESS_KEY_ID
     - R2_SECRET_ACCESS_KEY
     - R2_BUCKET
+    - GEMINI_API_KEY
 
 # Aliases are triggered with "bin/kamal <alias>". You can overwrite arguments on invocation:
 # "bin/kamal app logs -r job" will tail logs from the first server in the job section.
