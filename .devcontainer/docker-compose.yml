@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   app:
@@ -12,8 +12,8 @@ services:
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
 
-    # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
-    network_mode: service:db
+    networks:
+      - cosplit-network
 
     # Use "forwardPorts" in **devcontainer.json** to forward an app port locally.
     # (Adding the "ports" property to this file will not forward from a Codespace.)
@@ -27,9 +27,28 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
       POSTGRES_DB: cosplit-api-development
+    networks:
+      - cosplit-network
 
     # Add "forwardPorts": ["5432"] to **devcontainer.json** to forward PostgreSQL locally.
     # (Adding the "ports" property to this file will not forward from a Codespace.)
 
+  redis:
+    image: valkey/valkey:9
+    restart: unless-stopped
+    volumes:
+      - valkey-data:/data
+    command: valkey-server --save 60 1 --loglevel warning
+    networks:
+      - cosplit-network
+
+    # Add "forwardPorts": ["6379"] to **devcontainer.json** to forward Valkey locally.
+    # (Adding the "ports" property to this file will not forward from a Codespace.)
+
+networks:
+  cosplit-network:
+    driver: bridge
+
 volumes:
   postgres-data:
+  valkey-data:
