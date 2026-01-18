@@ -3,7 +3,7 @@ import { Job } from "bullmq";
 import { extractReceiptItems } from "receipt-ocr";
 import { PrismaService } from "src/prisma/prisma.service";
 
-@Processor("notifications")
+@Processor("receipt")
 export class ReceiptQueueProcessor extends WorkerHost {
   constructor(private readonly prisma: PrismaService) {
     super();
