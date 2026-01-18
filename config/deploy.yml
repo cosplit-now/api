@@ -42,6 +42,7 @@ builder:
 env:
   clear:
     NODE_ENV: production
+    REDIS_HOST: cosplit-api-redis
   secret:
     - DATABASE_URL
     - BETTER_AUTH_SECRET

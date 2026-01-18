@@ -13,7 +13,9 @@ import { ReceiptsModule } from "./receipts/receipts.module";
     AuthModule.forRoot({ auth }),
     PrismaModule,
     S3Module,
-    BullModule.forRoot({ connection: { host: "redis", port: 6379 } }),
+    BullModule.forRoot({
+      connection: { host: process.env["REDIS_HOST"], port: 6379 },
+    }),
     ReceiptsModule,
   ],
   controllers: [AppController],
