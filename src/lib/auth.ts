@@ -10,10 +10,15 @@ export const auth = betterAuth({
   advanced: {
     crossSubDomainCookies: {
       enabled: true,
-      domain: "cosplit.xinqi.mu",
+      domain: "xinqi.mu",
     },
   },
-  trustedOrigins: ["https://localhost:5173", "https://cosplit.xinqi.mu"],
+  trustedOrigins: [
+    "https://localhost:5173",
+    "https://cosplit.xinqi.mu",
+    "https://cosplit-api.xinqi.mu",
+    "https://xinqi.mu",
+  ],
   plugins: [
     anonymous({
       onLinkAccount: ({ anonymousUser, newUser }) => {
