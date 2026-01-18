@@ -21,10 +21,14 @@ export class ReceiptsService {
         userId,
       },
     });
-    await this.receiptQueue.add("ocr", {
-      receiptId: receipt.id,
-      imageUrl: createReceiptDto.imageUrl,
-    });
+    await this.receiptQueue.add(
+      "ocr",
+      {
+        receiptId: receipt.id,
+        imageUrl: createReceiptDto.imageUrl,
+      },
+      { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
+    );
     return receipt;
   }
 
