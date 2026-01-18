@@ -27,6 +27,8 @@ model User {
 
   isAnonymous Boolean? @default(false)
 
+  demoReceipts DemoReceipt[]
+
   @@unique([email])
   @@map("user")
 }
@@ -77,4 +79,27 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+// uploaded | ocr_processing | ocr_done | ocr_failed | confirme
+enum DemoReceiptStatus {
+  uploaded
+  ocr_processing
+  ocr_done
+  ocr_failed
+  confirmed
+}
+
+model DemoReceipt {
+  id          String            @id @default(cuid())
+  status      DemoReceiptStatus
+  imageUrl    String
+  ocrResult   Json?
+  finalResult Json?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
