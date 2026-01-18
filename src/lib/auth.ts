@@ -7,6 +7,12 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
+  advanced: {
+    crossSubDomainCookies: {
+      enabled: true,
+      domain: "cosplit.xinqi.mu",
+    },
+  },
   trustedOrigins: ["https://localhost:5173", "https://cosplit.xinqi.mu"],
   plugins: [
     anonymous({
