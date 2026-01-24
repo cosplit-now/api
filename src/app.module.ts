@@ -7,9 +7,12 @@ import { PrismaModule } from "./prisma/prisma.module";
 import { S3Module } from "./s3/s3.module";
 import { BullModule } from "@nestjs/bullmq";
 import { ReceiptsModule } from "./receipts/receipts.module";
+import { SentryGlobalFilter, SentryModule } from "@sentry/nestjs/setup";
+import { APP_FILTER } from "@nestjs/core";
 
 @Module({
   imports: [
+    SentryModule.forRoot(),
     AuthModule.forRoot({ auth }),
     PrismaModule,
     S3Module,
@@ -19,6 +22,12 @@ import { ReceiptsModule } from "./receipts/receipts.module";
     ReceiptsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    {
+      provide: APP_FILTER,
+      useClass: SentryGlobalFilter,
+    },
+    AppService,
+  ],
 })
 export class AppModule {}
