@@ -1,4 +1,5 @@
 ARG NODE_MAJOR_VERSION=22
+ARG SENTRY_AUTH_TOKEN
 
 FROM node:${NODE_MAJOR_VERSION}-slim AS base
 
@@ -21,6 +22,8 @@ COPY package*.json ./
 RUN npm ci && npm cache clean --force
 
 COPY . .
+
+ENV SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN}
 
 RUN npm run db:generate && npm run build
 
