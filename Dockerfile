@@ -3,7 +3,7 @@ ARG SENTRY_AUTH_TOKEN
 
 FROM node:${NODE_MAJOR_VERSION}-slim AS base
 
-RUN apt-get update -y && apt-get install -y openssl && \
+RUN apt-get update -y && apt-get install -y ca-certificates openssl && \
   apt-get clean && rm -rf /var/lib/apt/lists/* && \
   npm install -g npm@^11
 
