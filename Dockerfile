@@ -23,7 +23,7 @@ RUN npm ci && npm cache clean --force
 COPY . .
 
 RUN --mount=type=secret,id=SENTRY_AUTH_TOKEN \
-  SENTRY_AUTH_TOKEN="$(cat /run/secrets/SENTRY_AUTH_TOKEN)" \
+  export SENTRY_AUTH_TOKEN="$(cat /run/secrets/SENTRY_AUTH_TOKEN)" && \
   npm run db:generate && npm run build
 
 FROM gcr.io/distroless/nodejs${NODE_MAJOR_VERSION}-debian12 AS production
