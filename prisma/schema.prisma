@@ -27,6 +27,7 @@ model User {
 
   isAnonymous Boolean? @default(false)
 
+  receipts Receipt[]
   demoReceipts DemoReceipt[]
 
   @@unique([email])
@@ -102,4 +103,128 @@ model DemoReceipt {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Receipt {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  storeName    String?
+  storeAddress String?
+  receiptDate  DateTime?
+
+  subtotal    Decimal? @db.Decimal(14, 2)
+  discount    Decimal? @db.Decimal(14, 2)
+  taxAmount   Decimal? @db.Decimal(14, 2)
+  totalAmount Decimal? @db.Decimal(14, 2)
+
+  ocrResult Json?
+  ocrStatus OcrStatus @default(pending)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attachments  ReceiptAttachment[]
+  items        ReceiptItem[]
+  participants Participant[]
+  allocations  Allocation[]
+
+  @@index([userId])
+  @@map("receipt")
+}
+
+enum OcrStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+model ReceiptAttachment {
+  id String @id @default(cuid())
+
+  key          String
+  bucket       String
+  url          String
+  contentType  String?
+  sizeBytes    Int?
+  originalName String?
+
+  sortOrder Int     @default(0)
+  notes     String?
+
+  receiptId String
+  receipt   Receipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([receiptId])
+  @@map("receipt_attachment")
+}
+
+model ReceiptItem {
+  id          String   @id @default(cuid())
+  name        String
+  quantity    Int      @default(1)
+  unitPrice   Decimal  @db.Decimal(14, 2)
+  totalPrice  Decimal  @db.Decimal(14, 2)
+  discount    Decimal? @db.Decimal(14, 2)
+  description String?
+  category    String?
+  sortOrder   Int      @default(0)
+  rawData     Json?
+
+  receiptId String
+  receipt   Receipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+
+  allocations Allocation[]
+
+  @@index([receiptId])
+  @@map("receipt_item")
+}
+
+model Participant {
+  id      String  @id @default(cuid())
+  name    String
+  isPayer Boolean @default(false)
+
+  receiptId String
+  receipt   Receipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime     @default(now())
+  allocations Allocation[]
+
+  @@index([receiptId])
+  @@map("participant")
+}
+
+model Allocation {
+  id            String         @id @default(cuid())
+  type          AllocationType
+  participantId String
+  participant   Participant    @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  receiptItemId String
+  receiptItem   ReceiptItem    @relation(fields: [receiptItemId], references: [id], onDelete: Cascade)
+  receiptId     String
+  receipt       Receipt        @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+
+  value  Decimal @db.Decimal(14, 2)
+  amount Decimal @db.Decimal(14, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([participantId, receiptItemId])
+  @@index([receiptId])
+  @@index([participantId])
+  @@map("allocation")
+}
+
+enum AllocationType {
+  equal
+  weight
+  custom
+  quantity
 }
