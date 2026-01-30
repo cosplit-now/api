@@ -420,6 +420,16 @@ Add allocation.
 
 `type` values: `equal` | `shares` | `custom`
 
+`value` format by type (all sent as string to avoid float issues):
+- `equal`: `"0"` (ignored by backend)
+- `shares`: positive decimal string representing share weight (e.g., `"2"` for Alice vs `"1"` for Bob)
+- `custom`: decimal string representing fixed amount for this participant on that item (currency minor precision as per receipt currency)
+
+Validation:
+- 400 if `value` is missing/invalid for `shares` or `custom`
+- 422 if share weights sum to zero or custom amounts exceed item total
+- 409 if duplicate allocation for same participantId + receiptItemId
+
 **Response 201** - Returns created Allocation
 
 ---
