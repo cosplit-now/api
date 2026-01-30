@@ -403,42 +403,37 @@ Get list of allocations.
 
 ---
 
-### POST /v1/receipts/:receiptId/allocations
+### PUT /v1/items/:id/allocations
 
-Add allocation.
+Replace all allocations for a specific item in one request. Idempotent: repeated calls with the same body yield the same result.
 
 **Request Body**
 
 ```json
 {
-  "participantId": "part_xxx",
-  "receiptItemId": "item_xxx",
-  "type": "equal",
-  "value": "0"
+  "allocations": [
+    { "participantId": "part_xxx", "type": "equal",  "value": "0" },
+    { "participantId": "part_yyy", "type": "shares", "value": "2" },
+    { "participantId": "part_zzz", "type": "custom", "value": "12.34" }
+  ]
 }
 ```
 
-`type` values: `equal` | `shares` | `custom`
+Rules:
+- `allocations` may be empty to clear all allocations for the item.
+- Each participantId appears at most once.
+- `type` values: `equal` | `shares` | `custom`
+- `value` format (all strings to avoid float issues):
+  - `equal`: `"0"` (ignored by backend; may be omitted)
+  - `shares`: positive decimal string for share weight (e.g., `"2"` vs `"1"`)
+  - `custom`: decimal string for fixed amount for this participant on that item
 
-`value` format by type (all sent as string to avoid float issues):
-- `equal`: `"0"` (ignored by backend)
-- `shares`: positive decimal string representing share weight (e.g., `"2"` for Alice vs `"1"` for Bob)
-- `custom`: decimal string representing fixed amount for this participant on that item (currency minor precision as per receipt currency)
+Responses:
+- 200 with the final allocations list (and calculated amounts if available).
+- 400 for payload validation errors; 404 if item not found or not owned by current user; 422 for business validation (e.g., zero total shares, custom sums exceed item total).
 
-Validation:
-- 400 if `value` is missing/invalid for `shares` or `custom`
-- 422 if share weights sum to zero or custom amounts exceed item total
-- 409 if duplicate allocation for same participantId + receiptItemId
-
-**Response 201** - Returns created Allocation
-
----
-
-### DELETE /v1/allocations/:id
-
-Delete allocation.
-
-**Response 204**
+Concurrency (optional):
+- Accept `If-Unmodified-Since` or `If-Match` headers to avoid overwriting concurrent edits; if the precondition fails, return 412.
 
 ---
 

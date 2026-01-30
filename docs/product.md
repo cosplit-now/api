@@ -71,10 +71,8 @@ Assign participants to each item:
 - `custom` - Custom fixed amount per participant
 
 **Steps:**
-1. Select an item
-2. Select participant
-3. Choose allocation type
-4. Save via [POST /v1/receipts/:id/allocations](api.md#post-v1receiptsreceiptidallocations)
+1. Select an item and choose participants + allocation rules.
+2. When done with this item, save once via [PUT /v1/items/:id/allocations](api.md#put-v1itemsidallocations) to replace all allocations for the item (preferred to reduce requests).
 
 See also: [Allocation API](api.md#allocation)
 
