@@ -1,15 +1,4 @@
-import {
-  Controller,
-  Post,
-  // Delete,
-  Body,
-  // Param,
-  // UseInterceptors,
-  // UploadedFile,
-  // HttpCode,
-  // HttpStatus,
-} from "@nestjs/common";
-// import { FileInterceptor } from "@nestjs/platform-express";
+import { Controller, Post, Body } from "@nestjs/common";
 import { AllowAnonymous } from "@thallesp/nestjs-better-auth";
 import { S3Service } from "./s3.service";
 import { generateObjectKey } from "./s3-key.util";
