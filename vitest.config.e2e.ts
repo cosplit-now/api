@@ -27,6 +27,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "generated/prisma/client": resolve(__dirname, "generated/prisma/client"),
+      src: resolve(__dirname, "src"),
     },
   },
   plugins: [swc.vite()],

@@ -18,7 +18,10 @@ import { APP_FILTER } from "@nestjs/core";
     PrismaModule,
     S3Module,
     BullModule.forRoot({
-      connection: { host: process.env["REDIS_HOST"], port: 6379 },
+      connection: {
+        host: process.env["REDIS_HOST"],
+        port: Number(process.env["REDIS_PORT"] ?? "6379"),
+      },
     }),
     ReceiptsModule,
     UploadsModule,

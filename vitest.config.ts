@@ -18,6 +18,7 @@ export default defineConfig({
     alias: {
       // Ensure Vitest correctly resolves TypeScript path aliases
       "generated/prisma/client": resolve(__dirname, "generated/prisma/client"),
+      src: resolve(__dirname, "src"),
     },
   },
 });
