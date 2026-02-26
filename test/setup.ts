@@ -42,6 +42,17 @@ export async function setup() {
       },
       update: {},
     });
+    await prisma.user.upsert({
+      where: { id: "other-user-id" },
+      create: {
+        id: "other-user-id",
+        name: "Other User",
+        email: "other@example.com",
+        emailVerified: false,
+        isAnonymous: false,
+      },
+      update: {},
+    });
   } finally {
     await prisma.$disconnect();
   }

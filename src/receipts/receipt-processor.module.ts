@@ -1,12 +1,10 @@
 import { Module } from "@nestjs/common";
-import { ReceiptsService } from "./receipts.service";
-import { ReceiptsController } from "./receipts.controller";
 import { BullModule } from "@nestjs/bullmq";
 import { PrismaModule } from "../prisma/prisma.module";
+import { ReceiptQueueProcessor } from "./receipt-queue.processor";
 
 @Module({
   imports: [PrismaModule, BullModule.registerQueue({ name: "receipt" })],
-  controllers: [ReceiptsController],
-  providers: [ReceiptsService],
+  providers: [ReceiptQueueProcessor],
 })
-export class ReceiptsModule {}
+export class ReceiptProcessorModule {}

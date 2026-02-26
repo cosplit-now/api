@@ -19,8 +19,8 @@ import {
   INestApplication,
   ValidationPipe,
   VersioningType,
-  Type,
 } from "@nestjs/common";
+import { ModuleMetadata } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { TEST_USER } from "./auth.helper";
 
@@ -35,7 +35,7 @@ interface CreateTestAppOptions {
 }
 
 export async function createTestApp(
-  imports: Type<any>[],
+  imports: NonNullable<ModuleMetadata["imports"]>,
   options: CreateTestAppOptions = {},
 ): Promise<INestApplication> {
   let builder = Test.createTestingModule({ imports });

@@ -7,6 +7,7 @@ import { PrismaModule } from "./prisma/prisma.module";
 import { S3Module } from "./s3/s3.module";
 import { BullModule } from "@nestjs/bullmq";
 import { ReceiptsModule } from "./receipts/receipts.module";
+import { ReceiptProcessorModule } from "./receipts/receipt-processor.module";
 import { UploadsModule } from "./uploads/uploads.module";
 import { AttachmentsModule } from "./attachments/attachments.module";
 import { SentryGlobalFilter, SentryModule } from "@sentry/nestjs/setup";
@@ -25,6 +26,7 @@ import { APP_FILTER } from "@nestjs/core";
       },
     }),
     ReceiptsModule,
+    ReceiptProcessorModule,
     UploadsModule,
     AttachmentsModule,
   ],

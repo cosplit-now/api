@@ -36,6 +36,33 @@ export class ReceiptQueueProcessor extends WorkerHost {
         });
         throw e;
       }
+    } else if (job.name === "v1-ocr") {
+      const receipt = await this.prisma.receipt.findUnique({
+        where: { id: job.data.receiptId },
+      });
+      if (!receipt) return;
+
+      await this.prisma.receipt.update({
+        where: { id: job.data.receiptId },
+        data: { ocrStatus: "processing" },
+      });
+      try {
+        const receiptItems = await extractReceiptItems(job.data.imageUrl);
+        await this.prisma.receipt.update({
+          where: { id: job.data.receiptId },
+          data: {
+            ocrStatus: "completed",
+            ocrResult: JSON.stringify(receiptItems),
+          },
+        });
+      } catch (e) {
+        console.log("v1 receipt ocr failed", e);
+        await this.prisma.receipt.update({
+          where: { id: job.data.receiptId },
+          data: { ocrStatus: "failed" },
+        });
+        throw e;
+      }
     }
   }
 }
