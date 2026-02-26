@@ -10,7 +10,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 @Injectable()
 export class S3Service {
   private readonly client: S3Client;
-  private readonly bucket: string;
+  readonly bucket: string;
   private readonly publicBaseUrl: string;
 
   constructor() {
