@@ -7,6 +7,7 @@ API versioning: `/v1`
 All monetary values are transmitted as **string** type to avoid floating-point precision issues.
 
 Routes follow Ruby on Rails Shallow Resources convention:
+
 - Nested routes for collection operations (list, create)
 - Flat routes for member operations (get, update, delete)
 
@@ -20,11 +21,11 @@ Get list of receipts for current user.
 
 **Query Parameters**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| page | integer | No | Page number, default 1 |
-| pageSize | integer | No | Page size, default 20 |
-| ocrStatus | string | No | Filter by status: pending/processing/completed/failed |
+| Parameter | Type    | Required | Description                                           |
+| --------- | ------- | -------- | ----------------------------------------------------- |
+| page      | integer | No       | Page number, default 1                                |
+| pageSize  | integer | No       | Page size, default 20                                 |
+| ocrStatus | string  | No       | Filter by status: pending/processing/completed/failed |
 
 **Response 200**
 
@@ -267,11 +268,11 @@ Get current user's historical participants (all receipts).
 
 **Query Parameters**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| page | integer | No | Page number, default 1 |
-| pageSize | integer | No | Page size, default 20 |
-| search | string | No | Fuzzy match on participant name |
+| Parameter | Type    | Required | Description                     |
+| --------- | ------- | -------- | ------------------------------- |
+| page      | integer | No       | Page number, default 1          |
+| pageSize  | integer | No       | Page size, default 20           |
+| search    | string  | No       | Fuzzy match on participant name |
 
 **Response 200**
 
@@ -412,7 +413,7 @@ Replace all allocations for a specific item in one request. Idempotent: repeated
 ```json
 {
   "allocations": [
-    { "participantId": "part_xxx", "type": "equal",  "value": "0" },
+    { "participantId": "part_xxx", "type": "equal", "value": "0" },
     { "participantId": "part_yyy", "type": "shares", "value": "2" },
     { "participantId": "part_zzz", "type": "custom", "value": "12.34" }
   ]
@@ -420,6 +421,7 @@ Replace all allocations for a specific item in one request. Idempotent: repeated
 ```
 
 Rules:
+
 - `allocations` may be empty to clear all allocations for the item.
 - Each participantId appears at most once.
 - `type` values: `equal` | `shares` | `custom`
@@ -429,10 +431,12 @@ Rules:
   - `custom`: decimal string for fixed amount for this participant on that item
 
 Responses:
+
 - 200 with the final allocations list (and calculated amounts if available).
 - 400 for payload validation errors; 404 if item not found or not owned by current user; 422 for business validation (e.g., zero total shares, custom sums exceed item total).
 
 Concurrency (optional):
+
 - Accept `If-Unmodified-Since` or `If-Match` headers to avoid overwriting concurrent edits; if the precondition fails, return 412.
 
 ---
@@ -474,10 +478,12 @@ Create an attachment record after uploading a file to object storage.
 }
 ```
 
+`expiresAt` is the server cleanup time for unattached uploads (currently ~1 hour after creation).
+
 **Validation**
 
-- 400 if key/bucket missing
-- 403 if creating for another user
+- 400 if key/bucket/contentType/sizeBytes/originalName missing
+- 403 if key is not scoped to current user (must start with `receipts/{userId}/`)
 - `sortOrder` and `notes` are optional; `sortOrder` defaults to 0, `notes` defaults to null
 
 ### DELETE /v1/attachments/:id
@@ -487,6 +493,7 @@ Delete an attachment (only allowed before it is bound to any receipt).
 **Response 204**
 
 **Errors**
+
 - 404 if attachment not found
 - 422 if attachment is already in use
 
@@ -519,6 +526,8 @@ Get presigned URL for R2 upload.
 }
 ```
 
+`expiresAt` is when the presigned upload URL expires (currently ~1 hour).
+
 Use `key`/`bucket` (and the original upload metadata) when calling [POST /v1/attachments](#post-v1attachments) after the upload succeeds.
 
 ---
@@ -531,11 +540,13 @@ Use `key`/`bucket` (and the original upload metadata) when calling [POST /v1/att
 4. Call `POST /v1/receipts` with `attachmentIds` to bind attachments to the receipt.
 
 Rules:
+
 - Only attachments owned by the current user can be referenced.
 - `attachmentIds` must be unique per request.
 - Attachments already used by another receipt will be rejected (422).
 
 Server responsibilities (not exposed to client fields):
+
 - Internally tracks attachment lifecycle (e.g., pending/attached/expired).
 - May auto-clean unattached uploads; clients should create receipts soon after upload.
 
@@ -619,16 +630,16 @@ All errors follow a consistent format:
 
 **Common Error Codes**
 
-| Status | Error | Description |
-|--------|-------|-------------|
-| 400 | Bad Request | Validation failed (message is array) |
-| 401 | Unauthorized | Missing or invalid token |
-| 403 | Forbidden | Access denied |
-| 404 | Not Found | Resource not found |
-| 409 | Conflict | Duplicate resource |
-| 422 | Unprocessable Entity | Business logic error |
-| 429 | Too Many Requests | Rate limit exceeded |
-| 500 | Internal Server Error | Server error |
+| Status | Error                 | Description                          |
+| ------ | --------------------- | ------------------------------------ |
+| 400    | Bad Request           | Validation failed (message is array) |
+| 401    | Unauthorized          | Missing or invalid token             |
+| 403    | Forbidden             | Access denied                        |
+| 404    | Not Found             | Resource not found                   |
+| 409    | Conflict              | Duplicate resource                   |
+| 422    | Unprocessable Entity  | Business logic error                 |
+| 429    | Too Many Requests     | Rate limit exceeded                  |
+| 500    | Internal Server Error | Server error                         |
 
 ---
 
