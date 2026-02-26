@@ -12,6 +12,7 @@ import {
 import { FileInterceptor } from "@nestjs/platform-express";
 import { AllowAnonymous } from "@thallesp/nestjs-better-auth";
 import { S3Service } from "./s3.service";
+import "multer";
 
 @Controller("s3")
 export class S3Controller {
