@@ -1,3 +1,5 @@
+import Decimal from "decimal.js";
+
 type MoneyInput =
   | { toFixed: (digits: number) => string }
   | string
@@ -11,11 +13,11 @@ export function formatMoney(value: MoneyInput): string | null {
   }
 
   if (typeof value === "string") {
-    return padToTwoDecimals(value);
+    return new Decimal(value).toFixed(2);
   }
 
   if (typeof value === "number") {
-    return value.toFixed(2);
+    return new Decimal(String(value)).toFixed(2);
   }
 
   if (typeof value.toFixed === "function") {
@@ -23,23 +25,4 @@ export function formatMoney(value: MoneyInput): string | null {
   }
 
   return null;
-}
-
-function padToTwoDecimals(value: string): string {
-  if (value.includes("e") || value.includes("E")) {
-    return Number(value).toFixed(2);
-  }
-
-  const [whole, fraction = ""] = value.split(".");
-  if (fraction.length === 0) {
-    return `${whole}.00`;
-  }
-  if (fraction.length === 1) {
-    return `${whole}.${fraction}0`;
-  }
-  if (fraction.length === 2) {
-    return `${whole}.${fraction}`;
-  }
-
-  return Number(value).toFixed(2);
 }
