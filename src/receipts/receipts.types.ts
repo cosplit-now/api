@@ -74,3 +74,12 @@ export interface ReceiptsResponse {
     pageSize: number;
   };
 }
+
+export interface ParticipantsListResponse {
+  data: ParticipantResponse[];
+  meta: {
+    total: number;
+    page: number;
+    pageSize: number;
+  };
+}
