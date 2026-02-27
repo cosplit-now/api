@@ -106,6 +106,7 @@ Get receipt detail.
       "receiptItemId": "item_001",
       "type": "equal",
       "value": "0",
+      "amount": "499.99",
       "createdAt": "2024-01-28T10:00:00Z"
     }
   ],
