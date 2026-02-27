@@ -12,6 +12,8 @@ import { PrismaService } from "../prisma/prisma.service";
 import { DemoReceipt } from "generated/prisma/client";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
+import { toReceiptResponse, toReceiptsResponse } from "./receipts.mapper";
+import type { ReceiptResponse, ReceiptsResponse } from "./receipts.types";
 
 @Injectable()
 export class ReceiptsService {
@@ -76,7 +78,7 @@ export class ReceiptsService {
 
   // ── V1 methods ───────────────────────────────────────────────────────────
 
-  async list(dto: ListReceiptsDto, userId: string): Promise<any> {
+  async list(dto: ListReceiptsDto, userId: string): Promise<ReceiptsResponse> {
     const page = dto.page ?? 1;
     const pageSize = dto.pageSize ?? 20;
     const where = {
@@ -97,19 +99,10 @@ export class ReceiptsService {
       this.prisma.receipt.count({ where }),
     ]);
 
-    const data = receipts.map(({ attachments, ...r }) => ({
-      id: r.id,
-      storeName: r.storeName,
-      totalAmount: r.totalAmount,
-      ocrStatus: r.ocrStatus,
-      attachmentUrl: attachments[0]?.url ?? null,
-      createdAt: r.createdAt,
-    }));
-
-    return { data, meta: { total, page, pageSize } };
+    return toReceiptsResponse(receipts, total, page, pageSize);
   }
 
-  async findOne(id: string, userId: string): Promise<any> {
+  async findOne(id: string, userId: string): Promise<ReceiptResponse> {
     const receipt = await this.prisma.receipt.findUnique({
       where: { id },
       include: {
@@ -122,10 +115,13 @@ export class ReceiptsService {
     if (!receipt || receipt.userId !== userId) {
       throw new NotFoundException();
     }
-    return receipt;
+    return toReceiptResponse(receipt);
   }
 
-  async create(dto: CreateReceiptDto, userId: string): Promise<any> {
+  async create(
+    dto: CreateReceiptDto,
+    userId: string,
+  ): Promise<ReceiptResponse> {
     const { attachmentIds } = dto;
 
     const attachmentMap = new Map(
@@ -181,13 +177,13 @@ export class ReceiptsService {
     id: string,
     dto: UpdateReceiptDto,
     userId: string,
-  ): Promise<any> {
+  ): Promise<ReceiptResponse> {
     const receipt = await this.prisma.receipt.findUnique({ where: { id } });
     if (!receipt || receipt.userId !== userId) {
       throw new NotFoundException();
     }
 
-    return this.prisma.receipt.update({
+    await this.prisma.receipt.update({
       where: { id },
       data: {
         ...(dto.storeName !== undefined && { storeName: dto.storeName }),
@@ -198,13 +194,9 @@ export class ReceiptsService {
           receiptDate: new Date(dto.receiptDate),
         }),
       },
-      include: {
-        attachments: true,
-        items: true,
-        participants: true,
-        allocations: true,
-      },
     });
+
+    return this.findOne(id, userId);
   }
 
   async delete(id: string, userId: string): Promise<void> {
@@ -215,7 +207,7 @@ export class ReceiptsService {
     await this.prisma.receipt.delete({ where: { id } });
   }
 
-  async triggerOcr(id: string, userId: string): Promise<any> {
+  async triggerOcr(id: string, userId: string): Promise<{ ocrStatus: string }> {
     const receipt = await this.prisma.receipt.findUnique({ where: { id } });
     if (!receipt || receipt.userId !== userId) {
       throw new NotFoundException();

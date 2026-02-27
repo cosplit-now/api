@@ -10,6 +10,7 @@ import { ReceiptsModule } from "./receipts/receipts.module";
 import { ReceiptProcessorModule } from "./receipts/receipt-processor.module";
 import { UploadsModule } from "./uploads/uploads.module";
 import { AttachmentsModule } from "./attachments/attachments.module";
+import { ItemsModule } from "./items/items.module";
 import { SentryGlobalFilter, SentryModule } from "@sentry/nestjs/setup";
 import { APP_FILTER } from "@nestjs/core";
 
@@ -29,6 +30,7 @@ import { APP_FILTER } from "@nestjs/core";
     ReceiptProcessorModule,
     UploadsModule,
     AttachmentsModule,
+    ItemsModule,
   ],
   controllers: [AppController],
   providers: [

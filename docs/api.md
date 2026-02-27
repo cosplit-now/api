@@ -61,7 +61,7 @@ Get receipt detail.
   "storeAddress": "123 Main St",
   "receiptDate": "2024-01-28T10:00:00Z",
   "subtotal": "150.00",
-  "discount": "0",
+  "discount": "0.00",
   "taxAmount": "6.78",
   "totalAmount": "156.78",
   "ocrStatus": "completed",
@@ -85,7 +85,7 @@ Get receipt detail.
       "quantity": 1,
       "unitPrice": "999.99",
       "totalPrice": "999.99",
-      "discount": "0",
+      "discount": "0.00",
       "description": "256GB",
       "category": "Electronics",
       "taxExempt": false,
@@ -194,7 +194,7 @@ Get list of items for a receipt.
     "quantity": 1,
     "unitPrice": "999.99",
     "totalPrice": "999.99",
-    "discount": "0",
+    "discount": "0.00",
     "description": "256GB",
     "category": "Electronics",
     "taxExempt": false,
@@ -217,7 +217,7 @@ Create item for a receipt.
   "quantity": 1,
   "unitPrice": "999.99",
   "totalPrice": "999.99",
-  "discount": "0",
+  "discount": "0.00",
   "description": "256GB",
   "category": "Electronics",
   "taxExempt": false,
@@ -607,8 +607,8 @@ Get allocation summary.
   ],
   "totals": {
     "subtotal": "999.99",
-    "tax": "0",
-    "discount": "0",
+    "tax": "0.00",
+    "discount": "0.00",
     "total": "999.99"
   }
 }
