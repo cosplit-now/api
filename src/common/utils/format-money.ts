@@ -1,4 +1,4 @@
-import Decimal from "decimal.js";
+import { Prisma } from "generated/prisma/client";
 
 type MoneyInput =
   | { toFixed: (digits: number) => string }
@@ -13,11 +13,11 @@ export function formatMoney(value: MoneyInput): string | null {
   }
 
   if (typeof value === "string") {
-    return new Decimal(value).toFixed(2);
+    return new Prisma.Decimal(value).toFixed(2);
   }
 
   if (typeof value === "number") {
-    return new Decimal(String(value)).toFixed(2);
+    return new Prisma.Decimal(String(value)).toFixed(2);
   }
 
   if (typeof value.toFixed === "function") {

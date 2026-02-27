@@ -2,12 +2,10 @@ import { NotFoundException } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import { SummaryService } from "./summary.service";
 import { PrismaService } from "../prisma/prisma.service";
+import Decimal from "decimal.js";
 
-// Minimal Prisma Decimal-like object (toFixed / toString only)
-const dec = (v: string | number) => ({
-  toFixed: (d: number) => Number(v).toFixed(d),
-  toString: () => String(v),
-});
+// Decimal.js helper for Decimal-like Prisma fields in tests
+const dec = (v: string | number) => new Decimal(v);
 
 const USER_ID = "user-1";
 const OTHER_USER_ID = "other-user";

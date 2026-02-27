@@ -2,7 +2,7 @@ import {
   BadRequestException,
   UnprocessableEntityException,
 } from "@nestjs/common";
-import Decimal from "decimal.js";
+import { Prisma } from "generated/prisma/client";
 
 export type AllocationType = "equal" | "shares" | "custom";
 
@@ -49,7 +49,7 @@ export function computeAllocations(
     );
   }
 
-  const total = new Decimal(totalPrice);
+  const total = new Prisma.Decimal(totalPrice);
   const type = allocations[0].type;
 
   if (type === "equal") {
@@ -57,7 +57,7 @@ export function computeAllocations(
     // Truncate to 2 dp (ROUND_DOWN) for each share
     const baseAmount = total
       .dividedBy(n)
-      .toDecimalPlaces(2, Decimal.ROUND_DOWN);
+      .toDecimalPlaces(2, Prisma.Decimal.ROUND_DOWN);
     // Compute remainder: total - baseAmount * n
     const distributed = baseAmount.times(n);
     const remainder = total.minus(distributed).toDecimalPlaces(2);
@@ -73,8 +73,8 @@ export function computeAllocations(
 
   if (type === "shares") {
     const totalShares = allocations.reduce(
-      (sum, a) => sum.plus(new Decimal(a.value ?? "0")),
-      new Decimal(0),
+      (sum, a) => sum.plus(new Prisma.Decimal(a.value ?? "0")),
+      new Prisma.Decimal(0),
     );
     if (totalShares.isZero()) {
       throw new UnprocessableEntityException(
@@ -82,7 +82,7 @@ export function computeAllocations(
       );
     }
     return allocations.map((a) => {
-      const shareValue = new Decimal(a.value ?? "0");
+      const shareValue = new Prisma.Decimal(a.value ?? "0");
       return {
         participantId: a.participantId,
         type: "shares",
@@ -90,7 +90,7 @@ export function computeAllocations(
         amount: total
           .times(shareValue)
           .dividedBy(totalShares)
-          .toDecimalPlaces(2, Decimal.ROUND_HALF_UP)
+          .toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP)
           .toFixed(2),
       };
     });
@@ -98,8 +98,8 @@ export function computeAllocations(
 
   if (type === "custom") {
     const totalCustom = allocations.reduce(
-      (sum, a) => sum.plus(new Decimal(a.value ?? "0")),
-      new Decimal(0),
+      (sum, a) => sum.plus(new Prisma.Decimal(a.value ?? "0")),
+      new Prisma.Decimal(0),
     );
     if (totalCustom.greaterThan(total)) {
       throw new UnprocessableEntityException(
@@ -110,7 +110,7 @@ export function computeAllocations(
       participantId: a.participantId,
       type: "custom",
       value: a.value ?? "0",
-      amount: new Decimal(a.value ?? "0").toFixed(2),
+      amount: new Prisma.Decimal(a.value ?? "0").toFixed(2),
     }));
   }
 
@@ -119,6 +119,6 @@ export function computeAllocations(
     participantId: a.participantId,
     type: a.type,
     value: a.value ?? "0",
-    amount: new Decimal(a.value ?? "0").toFixed(2),
+    amount: new Prisma.Decimal(a.value ?? "0").toFixed(2),
   }));
 }

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { formatMoney } from "../common/utils/format-money";
-import Decimal from "decimal.js";
+import { Prisma } from "generated/prisma/client";
 import type {
   SummaryResponse,
   SummaryItem,
@@ -51,12 +51,14 @@ export class SummaryService {
     });
 
     // Aggregate per-participant totals
-    const participantTotals = new Map<string, Decimal>();
+    const participantTotals = new Map<string, Prisma.Decimal>();
     for (const alloc of receipt.allocations) {
       const current = participantTotals.get(alloc.participantId);
       participantTotals.set(
         alloc.participantId,
-        (current ?? new Decimal(0)).plus(new Decimal(alloc.amount.toString())),
+        (current ?? new Prisma.Decimal(0)).plus(
+          new Prisma.Decimal(alloc.amount.toString()),
+        ),
       );
     }
 
@@ -67,7 +69,9 @@ export class SummaryService {
       .map((p) => ({
         id: p.id,
         name: p.name,
-        totalAmount: (participantTotals.get(p.id) ?? new Decimal(0)).toFixed(2),
+        totalAmount: (
+          participantTotals.get(p.id) ?? new Prisma.Decimal(0)
+        ).toFixed(2),
       }));
 
     return {
