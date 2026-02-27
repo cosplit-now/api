@@ -1,4 +1,4 @@
-ARG NODE_MAJOR_VERSION=22
+ARG NODE_MAJOR_VERSION=24
 
 FROM node:${NODE_MAJOR_VERSION}-slim AS base
 
@@ -26,7 +26,7 @@ RUN --mount=type=secret,id=SENTRY_AUTH_TOKEN \
   export SENTRY_AUTH_TOKEN="$(cat /run/secrets/SENTRY_AUTH_TOKEN)" && \
   npm run db:generate && npm run build
 
-FROM gcr.io/distroless/nodejs${NODE_MAJOR_VERSION}-debian12 AS production
+FROM gcr.io/distroless/nodejs${NODE_MAJOR_VERSION}-debian13 AS production
 
 WORKDIR /app
 
