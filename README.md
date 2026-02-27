@@ -1,98 +1,167 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Cosplit API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Cosplit helps people split receipt expenses. This service powers the backend
+APIs for uploads, OCR-driven receipts, participants, allocations, and summary.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+For product context and API behavior:
 
-## Description
+- `docs/product.md`
+- `docs/api.md`
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## For Users
 
-## Project setup
+Cosplit lets you:
 
-```bash
-$ npm install
-```
+- Upload a receipt image and run OCR
+- Review and edit items
+- Add participants
+- Split items equally, by shares, or by custom amounts
+- View a summary of who owes what
 
-## Compile and run the project
+If you are integrating with this API, start with `docs/api.md`.
 
-```bash
-# development
-$ npm run start
+## For Developers
 
-# watch mode
-$ npm run start:dev
+This project is a NestJS + Prisma API that provides the v1 endpoints described
+in `docs/api.md`.
 
-# production mode
-$ npm run start:prod
-```
+## Requirements
 
-## Run tests
+- Node.js 18+
+- PostgreSQL
+- Redis (Valkey)
+
+Optional (recommended for local dev/testing): Docker + docker compose
+
+## Quick Start
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm install
+npm run db:generate
+npm run start:dev
 ```
 
-## Deployment
+## Environment
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Create a `.env` file for local development (not committed):
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+```env
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/cosplit-api-development
+BETTER_AUTH_SECRET=your-secret-32-characters-minimum
+BETTER_AUTH_URL=http://localhost:3000/auth
+REDIS_HOST=localhost
+REDIS_PORT=6379
+R2_ACCOUNT_ID=dev
+R2_ACCESS_KEY_ID=dev
+R2_SECRET_ACCESS_KEY=dev
+R2_BUCKET=dev-bucket
+R2_PUBLIC_BASE_URL=https://dev-r2.example.com
+```
+
+For tests, `.env.test` is already defined and uses local ports:
+
+- PostgreSQL: `localhost:55432`
+- Redis: `localhost:56379`
+
+## Docker (optional)
+
+Start local dependencies:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+docker compose up -d
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Start test dependencies:
 
-## Resources
+```bash
+docker compose -f docker-compose.test.yml up -d
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+## Scripts
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### Build / Lint / Format
 
-## Support
+```bash
+npm run build
+npm run lint
+npm run format
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### Unit Tests (Vitest)
 
-## Stay in touch
+```bash
+npm run test
+npm run test:watch
+npm run test:cov
+npm run test:debug
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Run a single unit test file:
 
-## License
+```bash
+npx vitest run src/path/to/file.spec.ts
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Run a single test by name:
+
+```bash
+npx vitest run -t "test name"
+```
+
+### E2E Tests
+
+```bash
+npm run test:e2e
+```
+
+Run a single E2E test file:
+
+```bash
+npx vitest run --config vitest.config.e2e.ts test/allocations.e2e-spec.ts
+```
+
+### Prisma
+
+```bash
+npm run db:migrate
+npm run db:migrate:deploy
+npm run db:reset
+npm run db:seed
+npm run db:generate
+npm run db:studio
+```
+
+## Project Structure
+
+- `src/` feature modules (flat layout)
+- `src/<module>/dto` DTO classes
+- `src/<module>/*.mapper.ts` response mappers
+- `src/<module>/*.types.ts` response interfaces
+- `test/` E2E tests (`*.e2e-spec.ts`)
+- `docs/api.md` API documentation
+- `docs/product.md` product requirements
+
+## API Conventions
+
+- Versioning uses URI prefix: `/v1`.
+- Responses are plain objects from mapper functions.
+- Monetary values are **strings** in API responses.
+- Use `formatMoney()` for output formatting.
+- Use `Prisma.Decimal` for precise money arithmetic in business logic.
+
+## Testing Notes
+
+- `test/setup.ts` runs migrations and seeds test users.
+- Use `test/helpers/create-app.helper.ts` to build Nest test apps.
+- Auth in tests is injected via Express middleware (`req.session.user`).
+- External integrations (S3/BullMQ) are mocked in tests.
+
+## Docs
+
+- API behavior must match `docs/api.md`.
+- Product flow must match `docs/product.md`.
+- When adding response fields, update the docs.
+
+## Agent Guidance
+
+See `AGENTS.md` for detailed coding conventions and test environment rules.
