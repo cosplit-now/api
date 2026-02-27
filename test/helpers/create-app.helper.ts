@@ -23,6 +23,7 @@ import {
 import { ModuleMetadata } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { TEST_USER } from "./auth.helper";
+import { App } from "supertest/types";
 
 interface ProviderOverride {
   provide: any;
@@ -37,7 +38,7 @@ interface CreateTestAppOptions {
 export async function createTestApp(
   imports: NonNullable<ModuleMetadata["imports"]>,
   options: CreateTestAppOptions = {},
-): Promise<INestApplication> {
+): Promise<INestApplication<App>> {
   let builder = Test.createTestingModule({ imports });
 
   for (const { provide, useValue } of options.overrideProviders ?? []) {
