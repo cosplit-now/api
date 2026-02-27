@@ -30,10 +30,17 @@ export interface ParticipantResponse {
 
 export interface AllocationResponse {
   id: string;
+
   participantId: string;
+
   receiptItemId: string;
+
   type: string;
+
   value: string;
+
+  amount: string;
+
   createdAt: Date;
 }
 

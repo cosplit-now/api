@@ -64,7 +64,8 @@ export function toAllocationResponse(
     participantId: allocation.participantId,
     receiptItemId: allocation.receiptItemId,
     type: allocation.type,
-    value: allocation.value.toString(),
+    value: formatMoney(allocation.value) as string,
+    amount: formatMoney(allocation.amount) as string,
     createdAt: allocation.createdAt,
   };
 }
