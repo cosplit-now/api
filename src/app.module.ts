@@ -13,6 +13,7 @@ import { AttachmentsModule } from "./attachments/attachments.module";
 import { ItemsModule } from "./items/items.module";
 import { ParticipantsModule } from "./participants/participants.module";
 import { AllocationsModule } from "./allocations/allocations.module";
+import { SummaryModule } from "./summary/summary.module";
 import { SentryGlobalFilter, SentryModule } from "@sentry/nestjs/setup";
 import { APP_FILTER } from "@nestjs/core";
 
@@ -35,6 +36,7 @@ import { APP_FILTER } from "@nestjs/core";
     ItemsModule,
     ParticipantsModule,
     AllocationsModule,
+    SummaryModule,
   ],
   controllers: [AppController],
   providers: [
