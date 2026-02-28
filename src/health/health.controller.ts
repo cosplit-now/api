@@ -6,7 +6,9 @@ import {
   MicroserviceHealthIndicator,
   PrismaHealthIndicator,
 } from "@nestjs/terminus";
+import { ConfigService } from "@nestjs/config";
 import { AllowAnonymous } from "@thallesp/nestjs-better-auth";
+import { type EnvironmentVariables } from "../config/env.schema";
 import { PrismaService } from "../prisma/prisma.service";
 import { S3HealthIndicator } from "./s3-health.indicator";
 
@@ -14,6 +16,7 @@ import { S3HealthIndicator } from "./s3-health.indicator";
 export class HealthController {
   constructor(
     private readonly health: HealthCheckService,
+    private readonly configService: ConfigService<EnvironmentVariables, true>,
     private readonly microserviceHealth: MicroserviceHealthIndicator,
     private readonly prismaHealth: PrismaHealthIndicator,
     private readonly prisma: PrismaService,
@@ -24,8 +27,8 @@ export class HealthController {
   @AllowAnonymous()
   @HealthCheck()
   check() {
-    const redisHost = process.env["REDIS_HOST"];
-    const redisPort = Number(process.env["REDIS_PORT"] ?? "6379");
+    const redisHost = this.configService.get("REDIS_HOST", { infer: true });
+    const redisPort = this.configService.get("REDIS_PORT", { infer: true });
 
     return this.health.check([
       () => this.prismaHealth.pingCheck("database", this.prisma),
