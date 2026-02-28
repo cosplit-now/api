@@ -3,16 +3,40 @@ import request from "supertest";
 import { App } from "supertest/types";
 import { AttachmentsModule } from "../src/attachments/attachments.module";
 import { PrismaService } from "../src/prisma/prisma.service";
+import { S3Service } from "../src/s3/s3.service";
 import { TEST_USER } from "./helpers/auth.helper";
 import { createTestApp } from "./helpers/create-app.helper";
 import { cleanDatabase } from "./helpers/db-cleanup.helper";
+
+const MOCK_PUBLIC_BASE_URL = "https://test-r2.example.com";
+
+function buildMockS3Service() {
+  return {
+    getSignedUrl: vi
+      .fn()
+      .mockResolvedValue("https://mock-r2.example.com/presigned"),
+    getPublicUrl: vi
+      .fn()
+      .mockImplementation((key: string) => `${MOCK_PUBLIC_BASE_URL}/${key}`),
+    getDownloadUrl: vi
+      .fn()
+      .mockResolvedValue("https://mock-r2.example.com/download"),
+    uploadImage: vi.fn(),
+    deleteImage: vi.fn(),
+    bucket: "test-bucket",
+  };
+}
 
 describe("/v1/attachments", () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
 
   beforeAll(async () => {
-    app = await createTestApp([AttachmentsModule]);
+    app = await createTestApp([AttachmentsModule], {
+      overrideProviders: [
+        { provide: S3Service, useValue: buildMockS3Service() },
+      ],
+    });
     prisma = app.get(PrismaService);
   });
 
