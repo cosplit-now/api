@@ -22,6 +22,7 @@ import {
 } from "@nestjs/common";
 import { ModuleMetadata } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
+import type { NextFunction, Request, Response } from "express";
 import { TEST_USER } from "./auth.helper";
 import { App } from "supertest/types";
 
@@ -57,11 +58,17 @@ export async function createTestApp(
   //   overrideGuard(AuthGuard) would be a no-op. Using middleware guarantees
   //   that request.session is always populated, which is exactly what the
   //   @Session() param decorator from @thallesp/nestjs-better-auth reads.
-  app.use((req: any, _res: any, next: () => void) => {
-    req.session = { user: TEST_USER };
-    req.user = TEST_USER;
-    next();
-  });
+  app.use(
+    (
+      req: Request & { session?: unknown; user?: unknown },
+      _res: Response,
+      next: NextFunction,
+    ) => {
+      req.session = { user: TEST_USER };
+      req.user = TEST_USER;
+      next();
+    },
+  );
 
   // Mirror the configuration that will be in main.ts
   app.enableVersioning({ type: VersioningType.URI });

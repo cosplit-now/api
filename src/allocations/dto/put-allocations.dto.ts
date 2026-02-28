@@ -1,11 +1,5 @@
 import { Type } from "class-transformer";
-import {
-  ArrayNotEmpty,
-  IsArray,
-  IsIn,
-  IsString,
-  ValidateNested,
-} from "class-validator";
+import { IsArray, IsIn, IsString, ValidateNested } from "class-validator";
 
 export class AllocationItemDto {
   @IsString()
