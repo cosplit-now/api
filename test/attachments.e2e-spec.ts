@@ -50,15 +50,22 @@ describe("/v1/attachments", () => {
         sortOrder: 0,
         notes: null,
       });
-      expect(res.body.id).toEqual(expect.any(String));
-      const expiresAt = new Date(res.body.expiresAt).getTime();
+      expect(res.body).toHaveProperty("id");
+      expect(res.body).toHaveProperty("expiresAt");
+      expect(res.body).toHaveProperty("createdAt");
+      const body = res.body as {
+        id: string;
+        expiresAt: string;
+        createdAt: string;
+      };
+      const expiresAt = new Date(body.expiresAt).getTime();
       const ONE_HOUR_MS = 60 * 60 * 1000;
       expect(expiresAt).toBeGreaterThanOrEqual(before + ONE_HOUR_MS - 5_000);
       expect(expiresAt).toBeLessThanOrEqual(after + ONE_HOUR_MS + 5_000);
-      expect(Number.isNaN(Date.parse(res.body.createdAt))).toBe(false);
+      expect(Number.isNaN(Date.parse(body.createdAt))).toBe(false);
 
       const record = await prisma.receiptAttachment.findUnique({
-        where: { id: res.body.id },
+        where: { id: body.id },
       });
       expect(record?.userId).toBe(TEST_USER.id);
     });

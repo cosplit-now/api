@@ -83,7 +83,10 @@ describe("/v1/receipts/:receiptId/items", () => {
       expect(Array.isArray(res.body)).toBe(true);
       expect(res.body).toHaveLength(2);
 
-      const names = res.body.map((item: any) => item.name);
+      expect(Array.isArray(res.body)).toBe(true);
+      const names = (res.body as Array<{ name: string }>).map(
+        (item) => item.name,
+      );
       expect(names).toEqual(expect.arrayContaining(["Apples", "Bananas"]));
     });
 
@@ -125,11 +128,12 @@ describe("/v1/receipts/:receiptId/items", () => {
         .send(payload)
         .expect(201);
 
-      expect(res.body.id).toEqual(expect.any(String));
+      expect(res.body).toHaveProperty("id");
       expect(res.body).toMatchObject(expected);
+      const body = res.body as { id: string };
 
       const record = await prisma.receiptItem.findUnique({
-        where: { id: res.body.id },
+        where: { id: body.id },
       });
       expect(record?.receiptId).toBe(receipt.id);
     });
@@ -194,14 +198,16 @@ describe("/v1/receipts/:receiptId/items", () => {
         })
         .expect(200);
 
-      expect(res.body.id).toBe(item.id);
-      expect(res.body.name).toBe("Updated");
-      expect(res.body.quantity).toBe(2);
-      expect(res.body.unitPrice).toBe("12.50");
-      expect(res.body.totalPrice).toBe("25.00");
-      expect(res.body.discount).toBe("1.00");
-      expect(res.body.taxExempt).toBe(true);
-      expect(res.body.sortOrder).toBe(1);
+      expect(res.body).toMatchObject({
+        id: item.id,
+        name: "Updated",
+        quantity: 2,
+        unitPrice: "12.50",
+        totalPrice: "25.00",
+        discount: "1.00",
+        taxExempt: true,
+        sortOrder: 1,
+      });
     });
 
     it("returns 400 when quantity is invalid", async () => {

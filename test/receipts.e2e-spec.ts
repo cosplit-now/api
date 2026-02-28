@@ -97,16 +97,27 @@ describe("/v1/receipts", () => {
         .send({ attachmentIds: [att.id] })
         .expect(201);
 
-      expect(res.body.id).toEqual(expect.any(String));
-      expect(res.body.userId).toBe(TEST_USER.id);
-      expect(res.body.ocrStatus).toBe("pending");
-      expect(Array.isArray(res.body.attachments)).toBe(true);
-      expect(res.body.attachments).toHaveLength(1);
-      expect(res.body.attachments[0].id).toBe(att.id);
-      expect(res.body.items).toEqual([]);
-      expect(res.body.participants).toEqual([]);
-      expect(res.body.allocations).toEqual([]);
-      expect(Number.isNaN(Date.parse(res.body.createdAt))).toBe(false);
+      const body100 = res.body as {
+        id: string;
+        userId: string;
+        ocrStatus: string;
+        items: unknown[];
+        participants: unknown[];
+        allocations: unknown[];
+        createdAt: string;
+        attachments: Array<{ id: string }>;
+      };
+      expect(typeof body100.id).toBe("string");
+      expect(body100.userId).toBe(TEST_USER.id);
+      expect(body100.ocrStatus).toBe("pending");
+      expect(body100.items).toEqual([]);
+      expect(body100.participants).toEqual([]);
+      expect(body100.allocations).toEqual([]);
+      expect(typeof body100.createdAt).toBe("string");
+      expect(Array.isArray(body100.attachments)).toBe(true);
+      expect(body100.attachments).toHaveLength(1);
+      expect(body100.attachments[0].id).toBe(att.id);
+      expect(Number.isNaN(Date.parse(body100.createdAt))).toBe(false);
     });
 
     it("marks attachment as attached in DB", async () => {
@@ -119,7 +130,9 @@ describe("/v1/receipts", () => {
       const updated = await prisma.receiptAttachment.findUnique({
         where: { id: att.id },
       });
-      expect(updated?.receiptId).toBe(res.body.id);
+      expect(res.body).toHaveProperty("id");
+      const body122 = res.body as { id: string };
+      expect(updated?.receiptId).toBe(body122.id);
       expect(updated?.status).toBe("attached");
     });
 
@@ -130,11 +143,13 @@ describe("/v1/receipts", () => {
         .send({ attachmentIds: [att.id] })
         .expect(201);
 
-      expect(mockReceiptQueue.add).toHaveBeenCalledWith(
-        "v1-ocr",
-        expect.objectContaining({ receiptId: expect.any(String) }),
-        expect.any(Object),
-      );
+      const addCall = mockReceiptQueue.add.mock.calls[0] as [
+        string,
+        { receiptId: string },
+        unknown,
+      ];
+      expect(addCall[0]).toBe("v1-ocr");
+      expect(typeof addCall[1].receiptId).toBe("string");
     });
 
     it("returns 400 if attachmentIds is empty", async () => {
@@ -197,27 +212,36 @@ describe("/v1/receipts", () => {
         .get("/v1/receipts")
         .expect(200);
 
-      expect(Array.isArray(res.body.data)).toBe(true);
-      expect(res.body.data).toHaveLength(2);
-      expect(res.body.meta).toMatchObject({ total: 2, page: 1, pageSize: 20 });
+      const bodyData = res.body as {
+        data: Array<{
+          storeName: string | null;
+          attachmentUrl: string | null;
+          ocrStatus: string;
+        }>;
+        meta: { total: number; page: number; pageSize: number };
+      };
+      expect(Array.isArray(bodyData.data)).toBe(true);
+      expect(bodyData.data).toHaveLength(2);
+      expect(bodyData.meta).toMatchObject({ total: 2, page: 1, pageSize: 20 });
 
       // summary shape: only these fields
-      const withAtt = res.body.data.find((d: any) => d.storeName === "Costco");
-      expect(withAtt).toMatchObject({
-        id: expect.any(String),
-        storeName: "Costco",
-        ocrStatus: "pending",
-        attachmentUrl: "https://cdn.test/img.jpg",
-        createdAt: expect.any(String),
-      });
+      const withAtt = bodyData.data.find((d) => d.storeName === "Costco");
+      expect(withAtt).toHaveProperty("id");
+      expect(withAtt).toHaveProperty("storeName", "Costco");
+      expect(withAtt).toHaveProperty("ocrStatus", "pending");
+      expect(withAtt).toHaveProperty(
+        "attachmentUrl",
+        "https://cdn.test/img.jpg",
+      );
+      expect(withAtt).toHaveProperty("createdAt");
       // no nested collections in list
       expect(withAtt).not.toHaveProperty("attachments");
       expect(withAtt).not.toHaveProperty("items");
       expect(withAtt).not.toHaveProperty("storeAddress");
 
       // receipt with no attachment has null attachmentUrl
-      const withoutAtt = res.body.data.find((d: any) => d.storeName === null);
-      expect(withoutAtt.attachmentUrl).toBeNull();
+      const withoutAtt = bodyData.data.find((d) => d.storeName === null);
+      expect(withoutAtt).toHaveProperty("attachmentUrl", null);
     });
 
     it("filters by ocrStatus", async () => {
@@ -228,9 +252,13 @@ describe("/v1/receipts", () => {
         .get("/v1/receipts?ocrStatus=completed")
         .expect(200);
 
-      expect(res.body.data).toHaveLength(1);
-      expect(res.body.data[0].ocrStatus).toBe("completed");
-      expect(res.body.meta.total).toBe(1);
+      const body244 = res.body as {
+        data: Array<{ ocrStatus: string }>;
+        meta: { total: number };
+      };
+      expect(body244.meta.total).toBe(1);
+      expect(body244.data).toHaveLength(1);
+      expect(body244.data[0]).toHaveProperty("ocrStatus", "completed");
     });
 
     it("respects pagination params", async () => {
@@ -242,8 +270,12 @@ describe("/v1/receipts", () => {
         .get("/v1/receipts?page=1&pageSize=2")
         .expect(200);
 
-      expect(res.body.data).toHaveLength(2);
-      expect(res.body.meta).toMatchObject({ total: 3, page: 1, pageSize: 2 });
+      const body260 = res.body as {
+        data: unknown[];
+        meta: { total: number; page: number; pageSize: number };
+      };
+      expect(body260.meta).toMatchObject({ total: 3, page: 1, pageSize: 2 });
+      expect(body260.data).toHaveLength(2);
     });
   });
 
@@ -261,14 +293,16 @@ describe("/v1/receipts", () => {
         .get(`/v1/receipts/${receipt.id}`)
         .expect(200);
 
-      expect(res.body.id).toBe(receipt.id);
-      expect(res.body.storeName).toBe("Costco");
-      expect(res.body.userId).toBe(TEST_USER.id);
-      expect(res.body.attachments).toHaveLength(1);
-      expect(res.body.attachments[0].id).toBe(att.id);
-      expect(res.body.items).toEqual([]);
-      expect(res.body.participants).toEqual([]);
-      expect(res.body.allocations).toEqual([]);
+      const body284 = res.body as { attachments: Array<{ id: string }> };
+      expect(res.body).toHaveProperty("id", receipt.id);
+      expect(res.body).toHaveProperty("storeName", "Costco");
+      expect(res.body).toHaveProperty("userId", TEST_USER.id);
+      expect(res.body).toHaveProperty("items", []);
+      expect(res.body).toHaveProperty("participants", []);
+      expect(res.body).toHaveProperty("allocations", []);
+      expect(Array.isArray(body284.attachments)).toBe(true);
+      expect(body284.attachments).toHaveLength(1);
+      expect(body284.attachments[0].id).toBe(att.id);
     });
 
     it("returns 404 if receipt not found", async () => {
@@ -299,8 +333,10 @@ describe("/v1/receipts", () => {
         .send({ storeName: "Target", storeAddress: "123 Main St" })
         .expect(200);
 
-      expect(res.body.storeName).toBe("Target");
-      expect(res.body.storeAddress).toBe("123 Main St");
+      expect(res.body).toMatchObject({
+        storeName: "Target",
+        storeAddress: "123 Main St",
+      });
     });
 
     it("returns 404 if receipt not found", async () => {
@@ -349,7 +385,7 @@ describe("/v1/receipts", () => {
       expect(mockReceiptQueue.add).toHaveBeenCalledWith(
         "v1-ocr",
         expect.objectContaining({ receiptId: receipt.id }),
-        expect.any(Object),
+        expect.anything(),
       );
     });
 

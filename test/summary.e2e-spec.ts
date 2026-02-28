@@ -111,38 +111,52 @@ describe("GET /v1/receipts/:id/summary", () => {
       .get(`/v1/receipts/${receipt.id}/summary`)
       .expect(200);
 
-    const body = res.body;
-
-    // items array
-    expect(Array.isArray(body.items)).toBe(true);
-    expect(body.items).toHaveLength(1);
-    const summaryItem = body.items[0];
-    expect(summaryItem.itemId).toBe(item.id);
-    expect(summaryItem.name).toBe("iPhone 15");
-    expect(summaryItem.totalPrice).toBe("999.99");
-    expect(Array.isArray(summaryItem.allocations)).toBe(true);
-    expect(summaryItem.allocations).toHaveLength(3);
-
-    // item allocation shape
-    const alloc = summaryItem.allocations[0];
-    expect(alloc.participantId).toEqual(expect.any(String));
-    expect(alloc.participantName).toEqual(expect.any(String));
-    expect(alloc.amount).toEqual(expect.any(String));
-
-    // participants array
-    expect(Array.isArray(body.participants)).toBe(true);
-    expect(body.participants).toHaveLength(3);
-    const summaryParticipant = body.participants[0];
-    expect(summaryParticipant.id).toEqual(expect.any(String));
-    expect(summaryParticipant.name).toEqual(expect.any(String));
-    expect(summaryParticipant.totalAmount).toEqual(expect.any(String));
+    const body = res.body as {
+      items: Array<{
+        itemId: string;
+        name: string;
+        totalPrice: string;
+        allocations: Array<{
+          participantId: string;
+          participantName: string;
+          amount: string;
+        }>;
+      }>;
+      participants: Array<{ id: string; name: string; totalAmount: string }>;
+      totals: {
+        subtotal: string;
+        tax: string;
+        discount: string;
+        total: string;
+      };
+    };
 
     // totals
-    expect(body.totals).toBeDefined();
     expect(body.totals.subtotal).toBe("999.99");
     expect(body.totals.tax).toBe("0.00");
     expect(body.totals.discount).toBe("0.00");
     expect(body.totals.total).toBe("999.99");
+
+    // items array
+    expect(Array.isArray(body.items)).toBe(true);
+    expect(body.items).toHaveLength(1);
+    expect(body.items[0].itemId).toBe(item.id);
+    expect(body.items[0].name).toBe("iPhone 15");
+    expect(body.items[0].totalPrice).toBe("999.99");
+    expect(Array.isArray(body.items[0].allocations)).toBe(true);
+    expect(body.items[0].allocations).toHaveLength(3);
+
+    // item allocation shape
+    expect(body.items[0].allocations[0]).toHaveProperty("participantId");
+    expect(body.items[0].allocations[0]).toHaveProperty("participantName");
+    expect(body.items[0].allocations[0]).toHaveProperty("amount");
+
+    // participants array
+    expect(Array.isArray(body.participants)).toBe(true);
+    expect(body.participants).toHaveLength(3);
+    expect(body.participants[0]).toHaveProperty("id");
+    expect(body.participants[0]).toHaveProperty("name");
+    expect(body.participants[0]).toHaveProperty("totalAmount");
   });
 
   it("correctly sums participant totals across multiple items", async () => {
@@ -183,8 +197,12 @@ describe("GET /v1/receipts/:id/summary", () => {
       .get(`/v1/receipts/${receipt.id}/summary`)
       .expect(200);
 
+    const bodyParticipants = res.body as {
+      participants: Array<{ id: string; totalAmount: string }>;
+    };
+    expect(Array.isArray(bodyParticipants.participants)).toBe(true);
     const byId: Record<string, string> = {};
-    for (const p of res.body.participants) {
+    for (const p of bodyParticipants.participants) {
       byId[p.id] = p.totalAmount;
     }
 
@@ -199,8 +217,7 @@ describe("GET /v1/receipts/:id/summary", () => {
       .get(`/v1/receipts/${receipt.id}/summary`)
       .expect(200);
 
-    expect(res.body.items).toEqual([]);
-    expect(res.body.participants).toEqual([]);
+    expect(res.body).toMatchObject({ items: [], participants: [] });
   });
 
   it("returns items with empty allocations when no allocations exist", async () => {
@@ -211,8 +228,12 @@ describe("GET /v1/receipts/:id/summary", () => {
       .get(`/v1/receipts/${receipt.id}/summary`)
       .expect(200);
 
-    expect(res.body.items).toHaveLength(1);
-    expect(res.body.items[0].allocations).toEqual([]);
+    const bodyItems = res.body as {
+      items: Array<{ allocations: unknown[] }>;
+    };
+    expect(Array.isArray(bodyItems.items)).toBe(true);
+    expect(bodyItems.items).toHaveLength(1);
+    expect(bodyItems.items[0].allocations).toEqual([]);
   });
 
   it("totals fall back to 0.00 when receipt has no monetary fields", async () => {
@@ -222,10 +243,14 @@ describe("GET /v1/receipts/:id/summary", () => {
       .get(`/v1/receipts/${receipt.id}/summary`)
       .expect(200);
 
-    expect(res.body.totals.subtotal).toBe("0.00");
-    expect(res.body.totals.tax).toBe("0.00");
-    expect(res.body.totals.discount).toBe("0.00");
-    expect(res.body.totals.total).toBe("0.00");
+    expect(res.body).toMatchObject({
+      totals: {
+        subtotal: "0.00",
+        tax: "0.00",
+        discount: "0.00",
+        total: "0.00",
+      },
+    });
   });
 
   it("returns 404 if receipt not found", async () => {
@@ -255,8 +280,12 @@ describe("GET /v1/receipts/:id/summary", () => {
       .get(`/v1/receipts/${receipt.id}/summary`)
       .expect(200);
 
-    const allocNames = res.body.items[0].allocations.map(
-      (a: any) => a.participantName,
+    const bodyAllocNames = res.body as {
+      items: Array<{ allocations: Array<{ participantName: string }> }>;
+    };
+    expect(Array.isArray(bodyAllocNames.items)).toBe(true);
+    const allocNames = bodyAllocNames.items[0].allocations.map(
+      (a) => a.participantName,
     );
     expect(allocNames).toEqual(expect.arrayContaining(["Alice", "Bob"]));
   });

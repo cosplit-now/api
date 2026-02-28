@@ -80,12 +80,10 @@ describe("POST /v1/uploads/presigned-url", () => {
       })
       .expect(200);
 
-    expect(res.body).toMatchObject({
-      uploadUrl: expect.any(String),
-      key: expect.any(String),
-      bucket: expect.any(String),
-      expiresAt: expect.any(String),
-    });
+    expect(res.body).toHaveProperty("uploadUrl");
+    expect(res.body).toHaveProperty("key");
+    expect(res.body).toHaveProperty("bucket");
+    expect(res.body).toHaveProperty("expiresAt");
   });
 
   it("uploadUrl is the presigned URL returned by S3Service", async () => {
@@ -98,7 +96,9 @@ describe("POST /v1/uploads/presigned-url", () => {
       })
       .expect(200);
 
-    expect(res.body.uploadUrl).toBe(MOCK_SIGNED_URL);
+    expect(res.body).toHaveProperty("uploadUrl");
+    const body101 = res.body as { uploadUrl: string };
+    expect(body101.uploadUrl).toBe(MOCK_SIGNED_URL);
   });
 
   it("key is scoped under receipts/ and contains the original filename", async () => {
@@ -111,8 +111,10 @@ describe("POST /v1/uploads/presigned-url", () => {
       })
       .expect(200);
 
-    expect(res.body.key).toMatch(/^receipts\//);
-    expect(res.body.key).toContain("IMG_1234.jpg");
+    expect(res.body).toHaveProperty("key");
+    const body114 = res.body as { key: string };
+    expect(body114.key).toMatch(/^receipts\//);
+    expect(body114.key).toContain("IMG_1234.jpg");
   });
 
   it("key is scoped under the current user's ID", async () => {
@@ -122,7 +124,9 @@ describe("POST /v1/uploads/presigned-url", () => {
       .expect(200);
 
     // The key should contain the test user's ID injected by createTestApp
-    expect(res.body.key).toContain(TEST_USER.id);
+    expect(res.body).toHaveProperty("key");
+    const body125 = res.body as { key: string };
+    expect(body125.key).toContain(TEST_USER.id);
   });
 
   it("bucket matches the configured R2 bucket", async () => {
@@ -135,7 +139,9 @@ describe("POST /v1/uploads/presigned-url", () => {
       })
       .expect(200);
 
-    expect(res.body.bucket).toBe(MOCK_BUCKET);
+    expect(res.body).toHaveProperty("bucket");
+    const body138 = res.body as { bucket: string };
+    expect(body138.bucket).toBe(MOCK_BUCKET);
   });
 
   it("expiresAt is an ISO 8601 date string roughly 1 hour in the future", async () => {
@@ -147,7 +153,9 @@ describe("POST /v1/uploads/presigned-url", () => {
       .expect(200);
 
     const after = Date.now();
-    const expiresAt = new Date(res.body.expiresAt).getTime();
+    expect(res.body).toHaveProperty("expiresAt");
+    const body150 = res.body as { expiresAt: string };
+    const expiresAt = new Date(body150.expiresAt).getTime();
 
     // expiresAt should be between (before + ~1h) and (after + ~1h + buffer)
     const ONE_HOUR_MS = 60 * 60 * 1000;
@@ -162,7 +170,7 @@ describe("POST /v1/uploads/presigned-url", () => {
       .expect(200);
 
     expect(mockS3.getSignedUrl).toHaveBeenCalledOnce();
-    const [calledKey] = mockS3.getSignedUrl.mock.calls[0];
+    const [calledKey] = mockS3.getSignedUrl.mock.calls[0] as [string];
     expect(calledKey).toContain("check.jpg");
   });
 

@@ -63,9 +63,14 @@ describe("/v1/participants", () => {
         .get("/v1/participants")
         .expect(200);
 
-      expect(res.body.meta.total).toBe(2);
-      expect(res.body.data).toHaveLength(2);
-      const names = res.body.data.map((p: any) => p.name);
+      const body66 = res.body as {
+        meta: { total: number };
+        data: Array<{ name: string }>;
+      };
+      expect(body66.meta.total).toBe(2);
+      expect(Array.isArray(body66.data)).toBe(true);
+      expect(body66.data).toHaveLength(2);
+      const names = body66.data.map((p) => p.name);
       expect(names).toEqual(expect.arrayContaining(["Alice", "Bob"]));
       expect(names).not.toContain("Charlie");
     });
@@ -78,13 +83,16 @@ describe("/v1/participants", () => {
         .get("/v1/participants")
         .expect(200);
 
-      const p = res.body.data[0];
-      expect(p.id).toEqual(expect.any(String));
-      expect(p.name).toBe("Alice");
-      expect(Number.isNaN(Date.parse(p.createdAt))).toBe(false);
-      // internal fields must not be exposed
-      expect(p.receiptId).toBeUndefined();
-      expect(p.isPayer).toBeUndefined();
+      const body85 = res.body as {
+        data: Array<{ id: string; name: string; createdAt: string }>;
+      };
+      expect(Array.isArray(body85.data)).toBe(true);
+      expect(body85.data[0]).toHaveProperty("id");
+      expect(body85.data[0]).toHaveProperty("name", "Alice");
+      expect(body85.data[0]).toHaveProperty("createdAt");
+      expect(body85.data[0]).not.toHaveProperty("receiptId");
+      expect(body85.data[0]).not.toHaveProperty("isPayer");
+      expect(Number.isNaN(Date.parse(body85.data[0].createdAt))).toBe(false);
     });
 
     it("returns empty list when user has no participants", async () => {
@@ -92,8 +100,9 @@ describe("/v1/participants", () => {
         .get("/v1/participants")
         .expect(200);
 
-      expect(res.body.data).toEqual([]);
-      expect(res.body.meta.total).toBe(0);
+      const body97 = res.body as { data: unknown[]; meta: { total: number } };
+      expect(body97.data).toEqual([]);
+      expect(body97.meta.total).toBe(0);
     });
 
     it("filters by search (case-insensitive fuzzy match)", async () => {
@@ -106,8 +115,13 @@ describe("/v1/participants", () => {
         .get("/v1/participants?search=alice")
         .expect(200);
 
-      expect(res.body.meta.total).toBe(2);
-      const names = res.body.data.map((p: any) => p.name);
+      const body109 = res.body as {
+        meta: { total: number };
+        data: Array<{ name: string }>;
+      };
+      expect(body109.meta.total).toBe(2);
+      expect(Array.isArray(body109.data)).toBe(true);
+      const names = body109.data.map((p) => p.name);
       expect(names).toEqual(expect.arrayContaining(["Alice", "Alice Smith"]));
       expect(names).not.toContain("Bob");
     });
@@ -122,10 +136,14 @@ describe("/v1/participants", () => {
         .get("/v1/participants?page=2&pageSize=2")
         .expect(200);
 
-      expect(res.body.meta.total).toBe(3);
-      expect(res.body.meta.page).toBe(2);
-      expect(res.body.meta.pageSize).toBe(2);
-      expect(res.body.data).toHaveLength(1);
+      const body127 = res.body as {
+        meta: { total: number; page: number; pageSize: number };
+        data: unknown[];
+      };
+      expect(body127.meta.total).toBe(3);
+      expect(body127.meta.page).toBe(2);
+      expect(body127.meta.pageSize).toBe(2);
+      expect(body127.data).toHaveLength(1);
     });
   });
 
@@ -146,7 +164,7 @@ describe("/v1/participants", () => {
 
       expect(Array.isArray(res.body)).toBe(true);
       expect(res.body).toHaveLength(2);
-      const names = res.body.map((p: any) => p.name);
+      const names = (res.body as Array<{ name: string }>).map((p) => p.name);
       expect(names).toEqual(expect.arrayContaining(["Alice", "Bob"]));
     });
 
@@ -176,14 +194,20 @@ describe("/v1/participants", () => {
         .send({ name: "Charlie" })
         .expect(201);
 
-      expect(res.body.id).toEqual(expect.any(String));
-      expect(res.body.name).toBe("Charlie");
-      expect(Number.isNaN(Date.parse(res.body.createdAt))).toBe(false);
-      expect(res.body.receiptId).toBeUndefined();
-      expect(res.body.isPayer).toBeUndefined();
+      const body185 = res.body as {
+        id: string;
+        name: string;
+        createdAt: string;
+      };
+      expect(res.body).toHaveProperty("id");
+      expect(body185.name).toBe("Charlie");
+      expect(res.body).toHaveProperty("createdAt");
+      expect(res.body).not.toHaveProperty("receiptId");
+      expect(res.body).not.toHaveProperty("isPayer");
+      expect(Number.isNaN(Date.parse(body185.createdAt))).toBe(false);
 
       const record = await prisma.participant.findUnique({
-        where: { id: res.body.id },
+        where: { id: body185.id },
       });
       expect(record?.receiptId).toBe(r.id);
     });
@@ -198,10 +222,12 @@ describe("/v1/participants", () => {
         .send({ participantId: existing.id })
         .expect(201);
 
-      expect(res.body.name).toBe("Alice");
+      expect(res.body).toHaveProperty("name", "Alice");
+      expect(res.body).toHaveProperty("id");
+      const body201 = res.body as { id: string };
 
       const record = await prisma.participant.findUnique({
-        where: { id: res.body.id },
+        where: { id: body201.id },
       });
       expect(record?.receiptId).toBe(r2.id);
     });
@@ -264,9 +290,8 @@ describe("/v1/participants", () => {
         .send({ name: "Alicia" })
         .expect(200);
 
-      expect(res.body.id).toBe(p.id);
-      expect(res.body.name).toBe("Alicia");
-      expect(res.body.receiptId).toBeUndefined();
+      expect(res.body).toMatchObject({ id: p.id, name: "Alicia" });
+      expect(res.body).not.toHaveProperty("receiptId");
     });
 
     it("returns 400 when name is empty", async () => {

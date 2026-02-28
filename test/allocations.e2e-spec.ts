@@ -112,14 +112,24 @@ describe("/v1 allocations", () => {
         .get(`/v1/receipts/${receipt.id}/allocations`)
         .expect(200);
 
-      const alloc = res.body[0];
-      expect(alloc.id).toEqual(expect.any(String));
-      expect(alloc.participantId).toBe(p.id);
-      expect(alloc.receiptItemId).toBe(item.id);
-      expect(alloc.type).toBe("custom");
-      expect(alloc.value).toBe("30.00");
-      expect(alloc.amount).toBe("30.00");
-      expect(Number.isNaN(Date.parse(alloc.createdAt))).toBe(false);
+      expect(Array.isArray(res.body)).toBe(true);
+      const allocList = res.body as Array<{
+        id: string;
+        participantId: string;
+        receiptItemId: string;
+        type: string;
+        value: string;
+        amount: string;
+        createdAt: string;
+      }>;
+      expect(allocList[0]).toHaveProperty("id");
+      expect(allocList[0].participantId).toBe(p.id);
+      expect(allocList[0].receiptItemId).toBe(item.id);
+      expect(allocList[0].type).toBe("custom");
+      expect(allocList[0].value).toBe("30.00");
+      expect(allocList[0].amount).toBe("30.00");
+      expect(allocList[0]).toHaveProperty("createdAt");
+      expect(Number.isNaN(Date.parse(allocList[0].createdAt))).toBe(false);
     });
 
     it("returns empty list when receipt has no allocations", async () => {
@@ -169,7 +179,9 @@ describe("/v1 allocations", () => {
       expect(Array.isArray(res.body)).toBe(true);
       expect(res.body).toHaveLength(2);
 
-      const amounts = res.body.map((a: any) => a.amount);
+      const amounts = (res.body as Array<{ amount: string }>).map(
+        (a) => a.amount,
+      );
       expect(amounts).toEqual(expect.arrayContaining(["50.00", "50.00"]));
     });
 
@@ -189,10 +201,14 @@ describe("/v1 allocations", () => {
         })
         .expect(200);
 
+      expect(Array.isArray(res.body)).toBe(true);
       expect(res.body).toHaveLength(2);
 
       const byParticipant: Record<string, string> = {};
-      for (const a of res.body) {
+      for (const a of res.body as Array<{
+        participantId: string;
+        amount: string;
+      }>) {
         byParticipant[a.participantId] = a.amount;
       }
 
@@ -216,10 +232,14 @@ describe("/v1 allocations", () => {
         })
         .expect(200);
 
+      expect(Array.isArray(res.body)).toBe(true);
       expect(res.body).toHaveLength(2);
 
       const byParticipant: Record<string, string> = {};
-      for (const a of res.body) {
+      for (const a of res.body as Array<{
+        participantId: string;
+        amount: string;
+      }>) {
         byParticipant[a.participantId] = a.amount;
       }
 
@@ -246,8 +266,10 @@ describe("/v1 allocations", () => {
         .send(body)
         .expect(200);
 
-      expect(res.body).toHaveLength(1);
-      expect(res.body[0].amount).toBe("100.00");
+      expect(Array.isArray(res.body)).toBe(true);
+      const idempotentList = res.body as Array<{ amount: string }>;
+      expect(idempotentList).toHaveLength(1);
+      expect(idempotentList[0]).toHaveProperty("amount", "100.00");
 
       const dbCount = await prisma.allocation.count({
         where: { receiptItemId: item.id },
@@ -360,14 +382,24 @@ describe("/v1 allocations", () => {
         })
         .expect(200);
 
-      const alloc = res.body[0];
-      expect(alloc.id).toEqual(expect.any(String));
-      expect(alloc.participantId).toBe(p.id);
-      expect(alloc.receiptItemId).toBe(item.id);
-      expect(alloc.type).toBe("equal");
-      expect(alloc.value).toBe("0.00");
-      expect(alloc.amount).toBe("50.00");
-      expect(Number.isNaN(Date.parse(alloc.createdAt))).toBe(false);
+      expect(Array.isArray(res.body)).toBe(true);
+      const returnedList = res.body as Array<{
+        id: string;
+        participantId: string;
+        receiptItemId: string;
+        type: string;
+        value: string;
+        amount: string;
+        createdAt: string;
+      }>;
+      expect(returnedList[0]).toHaveProperty("id");
+      expect(returnedList[0].participantId).toBe(p.id);
+      expect(returnedList[0].receiptItemId).toBe(item.id);
+      expect(returnedList[0].type).toBe("equal");
+      expect(returnedList[0].value).toBe("0.00");
+      expect(returnedList[0].amount).toBe("50.00");
+      expect(returnedList[0]).toHaveProperty("createdAt");
+      expect(Number.isNaN(Date.parse(returnedList[0].createdAt))).toBe(false);
     });
   });
 });
