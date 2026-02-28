@@ -14,6 +14,7 @@ import { ItemsModule } from "./items/items.module";
 import { ParticipantsModule } from "./participants/participants.module";
 import { AllocationsModule } from "./allocations/allocations.module";
 import { SummaryModule } from "./summary/summary.module";
+import { HealthModule } from "./health/health.module";
 import { SentryGlobalFilter, SentryModule } from "@sentry/nestjs/setup";
 import { APP_FILTER } from "@nestjs/core";
 
@@ -37,6 +38,7 @@ import { APP_FILTER } from "@nestjs/core";
     ParticipantsModule,
     AllocationsModule,
     SummaryModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [
