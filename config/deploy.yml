@@ -20,7 +20,7 @@ proxy:
   app_port: 3000
   forward_headers: true
   healthcheck:
-    path: /
+    path: /health
 
 # Credentials for your image host.
 registry:
@@ -45,6 +45,10 @@ env:
   clear:
     NODE_ENV: production
     REDIS_HOST: cosplit-api-redis
+    REDIS_PORT: 6379
+    CORS_ORIGINS: https://cosplit.xinqi.mu
+    TRUSTED_ORIGINS: https://cosplit.xinqi.mu,https://cosplit-api.xinqi.mu,https://xinqi.mu
+    SESSION_COOKIE_DOMAIN: .xinqi.mu
   secret:
     - DATABASE_URL
     - BETTER_AUTH_SECRET
