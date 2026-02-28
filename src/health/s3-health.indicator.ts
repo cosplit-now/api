@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import {
   HealthIndicatorService,
   type HealthIndicatorResult,
@@ -7,6 +7,8 @@ import { S3Service } from "../s3/s3.service";
 
 @Injectable()
 export class S3HealthIndicator {
+  private readonly logger = new Logger(S3HealthIndicator.name);
+
   constructor(
     private readonly s3Service: S3Service,
     private readonly healthIndicatorService: HealthIndicatorService,
@@ -17,7 +19,10 @@ export class S3HealthIndicator {
       await this.s3Service.ping();
       return this.healthIndicatorService.check(key).up();
     } catch (error) {
-      console.log("S3 health check failed", error);
+      this.logger.warn(
+        "S3 health check failed",
+        error instanceof Error ? error.stack : String(error),
+      );
       return this.healthIndicatorService
         .check(key)
         .down({ message: "S3 health check failed" });

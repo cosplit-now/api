@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   UnprocessableEntityException,
 } from "@nestjs/common";
@@ -17,6 +18,8 @@ import type { ReceiptResponse, ReceiptsResponse } from "./receipts.types";
 
 @Injectable()
 export class ReceiptsService {
+  private readonly logger = new Logger(ReceiptsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     @InjectQueue("receipt") private readonly receiptQueue: Queue,
@@ -40,6 +43,7 @@ export class ReceiptsService {
       },
       { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
     );
+    this.logger.log(`Demo receipt created: ${receipt.id} for user ${userId}`);
     return receipt;
   }
 
@@ -73,6 +77,7 @@ export class ReceiptsService {
     await this.prisma.demoReceipt.delete({
       where: { id, userId },
     });
+    this.logger.log(`Demo receipt deleted: ${id} by user ${userId}`);
     return `This action removes a #${id} receipt`;
   }
 
@@ -170,6 +175,9 @@ export class ReceiptsService {
       { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
     );
 
+    this.logger.log(
+      `Receipt created: ${receipt.id} for user ${userId} with ${attachmentIds.length} attachment(s)`,
+    );
     return this.findOne(receipt.id, userId);
   }
 
@@ -196,6 +204,7 @@ export class ReceiptsService {
       },
     });
 
+    this.logger.log(`Receipt updated: ${id} by user ${userId}`);
     return this.findOne(id, userId);
   }
 
@@ -205,6 +214,7 @@ export class ReceiptsService {
       throw new NotFoundException();
     }
     await this.prisma.receipt.delete({ where: { id } });
+    this.logger.log(`Receipt deleted: ${id} by user ${userId}`);
   }
 
   async triggerOcr(id: string, userId: string): Promise<{ ocrStatus: string }> {
@@ -234,6 +244,7 @@ export class ReceiptsService {
       { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
     );
 
+    this.logger.log(`OCR re-triggered for receipt ${id} by user ${userId}`);
     return { ocrStatus: "processing" };
   }
 }

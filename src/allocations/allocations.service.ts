@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { toAllocationResponse } from "./allocations.mapper";
 import { computeAllocations } from "./allocation-calculator";
@@ -7,6 +7,8 @@ import type { PutAllocationsDto } from "./dto/put-allocations.dto";
 
 @Injectable()
 export class AllocationsService {
+  private readonly logger = new Logger(AllocationsService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async listForReceipt(
@@ -78,6 +80,10 @@ export class AllocationsService {
 
       return results;
     });
+
+    this.logger.log(
+      `Allocations updated for item ${itemId} (receipt ${receiptId}): ${created.length} allocation(s) set`,
+    );
 
     return created.map(toAllocationResponse);
   }

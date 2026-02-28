@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { APP_FILTER } from "@nestjs/core";
+import { APP_FILTER, APP_INTERCEPTOR } from "@nestjs/core";
 import { BullModule } from "@nestjs/bullmq";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { SentryGlobalFilter, SentryModule } from "@sentry/nestjs/setup";
@@ -19,6 +19,7 @@ import { ReceiptsModule } from "./receipts/receipts.module";
 import { S3Module } from "./s3/s3.module";
 import { SummaryModule } from "./summary/summary.module";
 import { UploadsModule } from "./uploads/uploads.module";
+import { LoggingInterceptor } from "./common/interceptors/logging.interceptor";
 
 @Module({
   imports: [
@@ -71,6 +72,10 @@ import { UploadsModule } from "./uploads/uploads.module";
     {
       provide: APP_FILTER,
       useClass: SentryGlobalFilter,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
     },
     AppService,
   ],

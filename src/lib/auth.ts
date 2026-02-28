@@ -1,8 +1,11 @@
+import { Logger } from "@nestjs/common";
 import { betterAuth } from "better-auth/minimal";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { anonymous } from "better-auth/plugins";
 import { type EnvironmentVariables } from "../config/env.schema";
 import { prisma } from "./prisma";
+
+const logger = new Logger("Auth");
 
 const parseOriginList = (value: string): string[] =>
   value
@@ -35,8 +38,7 @@ export const createAuth = (config: AuthEnvConfig) => {
     plugins: [
       anonymous({
         onLinkAccount: ({ anonymousUser, newUser }) => {
-          // perform actions like moving the cart items from anonymous user to the new user
-          console.log(
+          logger.log(
             `Linking anonymous user ${anonymousUser.user.id} to new user ${newUser.user.id}`,
           );
         },

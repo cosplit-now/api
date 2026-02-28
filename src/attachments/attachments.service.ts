@@ -1,6 +1,7 @@
 import {
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
   UnprocessableEntityException,
 } from "@nestjs/common";
@@ -25,6 +26,8 @@ const EXPIRES_IN_SECONDS = 3600;
 
 @Injectable()
 export class AttachmentsService {
+  private readonly logger = new Logger(AttachmentsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly s3Service: S3Service,
@@ -54,6 +57,10 @@ export class AttachmentsService {
         userId,
       },
     });
+
+    this.logger.log(
+      `Attachment created: ${attachment.id} (key: ${dto.key}) for user ${userId}`,
+    );
 
     return {
       id: attachment.id,
@@ -88,8 +95,16 @@ export class AttachmentsService {
     await this.prisma.receiptAttachment.delete({ where: { id } });
     try {
       await this.s3Service.deleteImage(key);
-    } catch {
+    } catch (error) {
       // Best-effort cleanup; storage errors should not block deletion.
+      this.logger.warn(
+        `Failed to delete S3 object for attachment ${id} (key: ${key})`,
+        error instanceof Error ? error.stack : String(error),
+      );
     }
+
+    this.logger.log(
+      `Attachment deleted: ${id} (key: ${key}) by user ${userId}`,
+    );
   }
 }
