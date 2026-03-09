@@ -38,7 +38,6 @@ export async function setup() {
         name: "Test User",
         email: "test@example.com",
         emailVerified: false,
-        isAnonymous: false,
       },
       update: {},
     });
@@ -49,7 +48,6 @@ export async function setup() {
         name: "Other User",
         email: "other@example.com",
         emailVerified: false,
-        isAnonymous: false,
       },
       update: {},
     });

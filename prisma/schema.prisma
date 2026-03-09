@@ -23,11 +23,26 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  receipts     Receipt[]
-  demoReceipts DemoReceipt[]
-  attachments  ReceiptAttachment[]
+  receipts      Receipt[]
+  demoReceipts  DemoReceipt[]
+  attachments   ReceiptAttachment[]
+  refreshTokens RefreshToken[]
 
   @@map("user")
+}
+
+model RefreshToken {
+  id         String    @id @default(cuid())
+  tokenHash  String    @unique
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  replacedBy String?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@map("refresh_token")
 }
 
 // uploaded | ocr_processing | ocr_done | ocr_failed | confirme

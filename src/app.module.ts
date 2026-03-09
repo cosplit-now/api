@@ -1,11 +1,13 @@
 import { Module } from "@nestjs/common";
-import { APP_FILTER, APP_INTERCEPTOR } from "@nestjs/core";
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { BullModule } from "@nestjs/bullmq";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { SentryGlobalFilter, SentryModule } from "@sentry/nestjs/setup";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { AttachmentsModule } from "./attachments/attachments.module";
+import { AuthModule } from "./auth/auth.module";
+import { JwtAuthGuard } from "./auth/guards/jwt-auth.guard";
 import { type EnvironmentVariables, validateEnv } from "./config/env.schema";
 import { HealthModule } from "./health/health.module";
 import { AllocationsModule } from "./allocations/allocations.module";
@@ -28,6 +30,7 @@ import { LoggingInterceptor } from "./common/interceptors/logging.interceptor";
     }),
     SentryModule.forRoot(),
     PrismaModule,
+    AuthModule,
     S3Module,
     BullModule.forRootAsync({
       inject: [ConfigService],
@@ -59,6 +62,10 @@ import { LoggingInterceptor } from "./common/interceptors/logging.interceptor";
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
     },
     AppService,
   ],
