@@ -7,7 +7,9 @@ import type { EnvironmentVariables } from "../config/env.schema";
 import { PrismaService } from "../prisma/prisma.service";
 import type { AppUser, TokenResponse } from "./auth.types";
 
-interface GoogleProfile {
+interface OAuthProfile {
+  provider: string;
+  providerAccountId: string;
   email: string;
   name: string;
   picture?: string;
@@ -46,24 +48,58 @@ export class AuthService {
 
   // ── User ──────────────────────────────────────────────────────────────────
 
-  async findOrCreateUser(profile: GoogleProfile): Promise<AppUser> {
-    let user = await this.prisma.user.findUnique({
+  async findOrCreateUser(profile: OAuthProfile): Promise<AppUser> {
+    // Step 1: look up by (provider, providerAccountId)
+    const existingAccount = await this.prisma.oAuthAccount.findUnique({
+      where: {
+        provider_providerAccountId: {
+          provider: profile.provider,
+          providerAccountId: profile.providerAccountId,
+        },
+      },
+      include: { user: true },
+    });
+
+    if (existingAccount) {
+      return existingAccount.user;
+    }
+
+    // Step 2: fall back to email — auto-link when email matches an existing user
+    const existingUser = await this.prisma.user.findUnique({
       where: { email: profile.email },
     });
 
-    if (!user) {
-      user = await this.prisma.user.create({
+    if (existingUser) {
+      await this.prisma.oAuthAccount.create({
         data: {
-          name: profile.name,
-          email: profile.email,
-          emailVerified: true,
-          image: profile.picture ?? null,
+          provider: profile.provider,
+          providerAccountId: profile.providerAccountId,
+          userId: existingUser.id,
         },
       });
-      this.logger.log(`New user created: ${user.id} (${user.email})`);
+      this.logger.log(
+        `Linked ${profile.provider} account to existing user ${existingUser.id} (${existingUser.email})`,
+      );
+      return existingUser;
     }
 
-    return user;
+    // Step 3: create a new user + OAuthAccount
+    const newUser = await this.prisma.user.create({
+      data: {
+        name: profile.name,
+        email: profile.email,
+        emailVerified: true,
+        image: profile.picture ?? null,
+        oauthAccounts: {
+          create: {
+            provider: profile.provider,
+            providerAccountId: profile.providerAccountId,
+          },
+        },
+      },
+    });
+    this.logger.log(`New user created: ${newUser.id} (${newUser.email})`);
+    return newUser;
   }
 
   // ── Tokens ────────────────────────────────────────────────────────────────
@@ -167,7 +203,7 @@ export class AuthService {
 
   // ── Mobile: verify Google ID token ───────────────────────────────────────
 
-  async verifyGoogleIdToken(idToken: string): Promise<GoogleProfile> {
+  async verifyGoogleIdToken(idToken: string): Promise<OAuthProfile> {
     const client = new OAuth2Client(this.googleClientId);
     let payload;
     try {
@@ -185,6 +221,8 @@ export class AuthService {
     }
 
     return {
+      provider: "google",
+      providerAccountId: payload.sub,
       email: payload.email,
       name: payload.name ?? payload.email,
       picture: payload.picture,
