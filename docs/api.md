@@ -13,6 +13,191 @@ Routes follow Ruby on Rails Shallow Resources convention:
 
 ---
 
+## Authentication
+
+All protected endpoints require a Bearer token in the `Authorization` header:
+
+```
+Authorization: Bearer <access_token>
+```
+
+- **access_token** — short-lived JWT, expires in 1 hour.
+- **refresh_token** — long-lived opaque token, expires in 30 days. Rotates on every refresh (old token is immediately revoked).
+- Missing or expired access token returns `401 Unauthorized`.
+
+---
+
+## Auth
+
+### GET /auth/google
+
+**Web flow — Step 1.** Redirects the browser to the Google OAuth consent screen. No request body required.
+
+This endpoint is public (no `Authorization` header needed).
+
+```
+302 → https://accounts.google.com/o/oauth2/v2/auth?...
+```
+
+---
+
+### GET /auth/google/callback
+
+**Web flow — Step 2.** Google redirects here after the user grants access. The server exchanges the Google auth code for a user profile, then issues a short-lived one-time exchange code and redirects the browser to the frontend.
+
+This endpoint is public and handled automatically by Passport — clients should not call it directly.
+
+```
+302 → <FRONTEND_URL>?code=<exchange_code>
+```
+
+The `exchange_code` is single-use and expires after **5 minutes**.
+
+---
+
+### POST /auth/exchange
+
+**Web flow — Step 3.** The frontend calls this endpoint to exchange the one-time code (from the callback redirect) for a token pair.
+
+This endpoint is public.
+
+**Request Body**
+
+```json
+{
+  "code": "a1b2c3d4e5f6..."
+}
+```
+
+**Response 200**
+
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "refresh_token": "d4e5f6a1b2c3..."
+}
+```
+
+**Errors**
+
+| Status | Description                               |
+| ------ | ----------------------------------------- |
+| 401    | Code is invalid, already used, or expired |
+
+---
+
+### POST /auth/google/token
+
+**Mobile flow.** Mobile clients obtain a Google ID token via the native Google Sign-In SDK (iOS / Android) and pass it here to receive a token pair directly — no browser redirect required.
+
+This endpoint is public.
+
+**Request Body**
+
+```json
+{
+  "id_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Response 200** — same `TokenResponse` as `/auth/exchange`
+
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "refresh_token": "d4e5f6a1b2c3..."
+}
+```
+
+**Errors**
+
+| Status | Description                                              |
+| ------ | -------------------------------------------------------- |
+| 401    | `id_token` is invalid or could not be verified by Google |
+
+---
+
+### POST /auth/refresh
+
+Exchange a valid refresh token for a new token pair. The old refresh token is immediately revoked (token rotation).
+
+This endpoint is public.
+
+**Request Body**
+
+```json
+{
+  "refresh_token": "d4e5f6a1b2c3..."
+}
+```
+
+**Response 200** — new `TokenResponse`
+
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "refresh_token": "f6a1b2c3d4e5..."
+}
+```
+
+**Errors**
+
+| Status | Description                                   |
+| ------ | --------------------------------------------- |
+| 401    | Refresh token is invalid, revoked, or expired |
+
+---
+
+### DELETE /auth/session
+
+Revoke the current refresh token (logout). The client should also discard both tokens from local storage.
+
+This endpoint is public (no access token required — the refresh token itself identifies the session).
+
+**Request Body**
+
+```json
+{
+  "refresh_token": "d4e5f6a1b2c3..."
+}
+```
+
+**Response 204** — no body
+
+---
+
+### GET /auth/me
+
+Return the currently authenticated user.
+
+**Requires** `Authorization: Bearer <access_token>`.
+
+**Response 200**
+
+```json
+{
+  "id": "clxxx",
+  "name": "Alice",
+  "email": "alice@example.com",
+  "emailVerified": true,
+  "image": "https://lh3.googleusercontent.com/..."
+}
+```
+
+**Errors**
+
+| Status | Description                     |
+| ------ | ------------------------------- |
+| 401    | Missing or invalid access token |
+
+---
+
 ## Receipt
 
 ### GET /v1/receipts
