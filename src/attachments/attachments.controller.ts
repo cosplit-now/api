@@ -7,8 +7,8 @@ import {
   Param,
   Post,
 } from "@nestjs/common";
-import { Session } from "@thallesp/nestjs-better-auth";
-import type { UserSession } from "@thallesp/nestjs-better-auth";
+import { CurrentUser } from "../auth/decorators";
+import type { AppUser } from "../auth/auth.types";
 import { AttachmentsService } from "./attachments.service";
 import { CreateAttachmentDto } from "./dto/create-attachment.dto";
 
@@ -18,13 +18,13 @@ export class AttachmentsController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() dto: CreateAttachmentDto, @Session() session: UserSession) {
-    return this.attachmentsService.createAttachment(dto, session.user.id);
+  create(@Body() dto: CreateAttachmentDto, @CurrentUser() user: AppUser) {
+    return this.attachmentsService.createAttachment(dto, user.id);
   }
 
   @Delete(":id")
   @HttpCode(HttpStatus.NO_CONTENT)
-  async delete(@Param("id") id: string, @Session() session: UserSession) {
-    await this.attachmentsService.deleteAttachment(id, session.user.id);
+  async delete(@Param("id") id: string, @CurrentUser() user: AppUser) {
+    await this.attachmentsService.deleteAttachment(id, user.id);
   }
 }

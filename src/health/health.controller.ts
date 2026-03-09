@@ -7,10 +7,10 @@ import {
   PrismaHealthIndicator,
 } from "@nestjs/terminus";
 import { ConfigService } from "@nestjs/config";
-import { AllowAnonymous } from "@thallesp/nestjs-better-auth";
 import { type EnvironmentVariables } from "../config/env.schema";
 import { PrismaService } from "../prisma/prisma.service";
 import { S3HealthIndicator } from "./s3-health.indicator";
+import { Public } from "../auth/decorators";
 
 @Controller("health")
 export class HealthController {
@@ -24,7 +24,7 @@ export class HealthController {
   ) {}
 
   @Get()
-  @AllowAnonymous()
+  @Public()
   @HealthCheck()
   check() {
     const redisHost = this.configService.get("REDIS_HOST", { infer: true });

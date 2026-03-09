@@ -1,19 +1,19 @@
 import { Controller, Get } from "@nestjs/common";
 import { AppService } from "./app.service";
-import { AllowAnonymous } from "@thallesp/nestjs-better-auth";
+import { Public } from "./auth/decorators";
 
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Get()
-  @AllowAnonymous()
+  @Public()
   getHello(): string {
     return this.appService.getHello();
   }
 
   @Get("user-count")
-  @AllowAnonymous()
+  @Public()
   testPrisma(): Promise<number> {
     return this.appService.testPrisma();
   }

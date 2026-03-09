@@ -1,5 +1,5 @@
 import { Controller, Post, Body } from "@nestjs/common";
-import { AllowAnonymous } from "@thallesp/nestjs-better-auth";
+import { Public } from "../auth/decorators";
 import { generateObjectKey } from "./s3-key.util";
 import { S3Service } from "./s3.service";
 
@@ -8,7 +8,7 @@ export class S3Controller {
   constructor(private readonly s3Service: S3Service) {}
 
   @Post("signed-url")
-  @AllowAnonymous()
+  @Public()
   async getSignedUrl(@Body("filename") filename: string) {
     const key = generateObjectKey(filename);
     const url = await this.s3Service.getSignedUrl(key);

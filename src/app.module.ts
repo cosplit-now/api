@@ -3,13 +3,11 @@ import { APP_FILTER, APP_INTERCEPTOR } from "@nestjs/core";
 import { BullModule } from "@nestjs/bullmq";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { SentryGlobalFilter, SentryModule } from "@sentry/nestjs/setup";
-import { AuthModule } from "@thallesp/nestjs-better-auth";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { AttachmentsModule } from "./attachments/attachments.module";
 import { type EnvironmentVariables, validateEnv } from "./config/env.schema";
 import { HealthModule } from "./health/health.module";
-import { createAuth } from "./lib/auth";
 import { AllocationsModule } from "./allocations/allocations.module";
 import { ItemsModule } from "./items/items.module";
 import { ParticipantsModule } from "./participants/participants.module";
@@ -29,27 +27,6 @@ import { LoggingInterceptor } from "./common/interceptors/logging.interceptor";
       validate: validateEnv,
     }),
     SentryModule.forRoot(),
-    AuthModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (
-        configService: ConfigService<EnvironmentVariables, true>,
-      ) => ({
-        auth: createAuth({
-          TRUSTED_ORIGINS: configService.get("TRUSTED_ORIGINS", {
-            infer: true,
-          }),
-          SESSION_COOKIE_DOMAIN: configService.get("SESSION_COOKIE_DOMAIN", {
-            infer: true,
-          }),
-          GOOGLE_CLIENT_ID: configService.get("GOOGLE_CLIENT_ID", {
-            infer: true,
-          }),
-          GOOGLE_CLIENT_SECRET: configService.get("GOOGLE_CLIENT_SECRET", {
-            infer: true,
-          }),
-        }),
-      }),
-    }),
     PrismaModule,
     S3Module,
     BullModule.forRootAsync({

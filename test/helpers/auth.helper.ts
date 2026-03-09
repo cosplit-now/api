@@ -6,7 +6,6 @@ export const TEST_USER = {
   name: "Test User",
   email: "test@example.com",
   emailVerified: false,
-  isAnonymous: false,
   image: null as string | null,
   createdAt: new Date("2024-01-01T00:00:00.000Z"),
   updatedAt: new Date("2024-01-01T00:00:00.000Z"),

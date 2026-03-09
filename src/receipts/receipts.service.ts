@@ -27,12 +27,13 @@ export class ReceiptsService {
 
   // ── Demo methods ─────────────────────────────────────────────────────────
 
-  async demoCreate(createReceiptDto: CreateDemoReceiptDto, userId: string) {
+  async demoCreate(
+    createReceiptDto: CreateDemoReceiptDto,
+  ): Promise<DemoReceipt> {
     const receipt = await this.prisma.demoReceipt.create({
       data: {
         status: "uploaded",
         imageUrl: createReceiptDto.imageUrl,
-        userId,
       },
     });
     await this.receiptQueue.add(
@@ -43,13 +44,12 @@ export class ReceiptsService {
       },
       { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
     );
-    this.logger.log(`Demo receipt created: ${receipt.id} for user ${userId}`);
+    this.logger.log(`Demo receipt created: ${receipt.id}`);
     return receipt;
   }
 
-  async demoFindAll(userId: string): Promise<DemoReceipt[]> {
+  async demoFindAll(): Promise<DemoReceipt[]> {
     const receipts = await this.prisma.demoReceipt.findMany({
-      where: { userId },
       orderBy: { createdAt: "desc" },
     });
     return receipts;
@@ -73,11 +73,11 @@ export class ReceiptsService {
     return `This action updates a #${id} receipt`;
   }
 
-  async demoRemove(id: string, userId: string) {
+  async demoRemove(id: string) {
     await this.prisma.demoReceipt.delete({
-      where: { id, userId },
+      where: { id },
     });
-    this.logger.log(`Demo receipt deleted: ${id} by user ${userId}`);
+    this.logger.log(`Demo receipt deleted: ${id}`);
     return `This action removes a #${id} receipt`;
   }
 

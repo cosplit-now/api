@@ -10,8 +10,8 @@ import {
   Post,
   Query,
 } from "@nestjs/common";
-import { Session } from "@thallesp/nestjs-better-auth";
-import type { UserSession } from "@thallesp/nestjs-better-auth";
+import { CurrentUser } from "../auth/decorators";
+import type { AppUser } from "../auth/auth.types";
 import { ParticipantsService } from "./participants.service";
 import { ListParticipantsDto } from "./dto/list-participants.dto";
 import { AddParticipantDto } from "./dto/add-participant.dto";
@@ -22,23 +22,23 @@ export class ParticipantsController {
   constructor(private readonly participantsService: ParticipantsService) {}
 
   @Get()
-  list(@Query() query: ListParticipantsDto, @Session() session: UserSession) {
-    return this.participantsService.listAll(query, session.user.id);
+  list(@Query() query: ListParticipantsDto, @CurrentUser() user: AppUser) {
+    return this.participantsService.listAll(query, user.id);
   }
 
   @Patch(":id")
   update(
     @Param("id") id: string,
     @Body() dto: UpdateParticipantDto,
-    @Session() session: UserSession,
+    @CurrentUser() user: AppUser,
   ) {
-    return this.participantsService.update(id, dto, session.user.id);
+    return this.participantsService.update(id, dto, user.id);
   }
 
   @Delete(":id")
   @HttpCode(HttpStatus.NO_CONTENT)
-  async delete(@Param("id") id: string, @Session() session: UserSession) {
-    await this.participantsService.delete(id, session.user.id);
+  async delete(@Param("id") id: string, @CurrentUser() user: AppUser) {
+    await this.participantsService.delete(id, user.id);
   }
 }
 
@@ -47,8 +47,8 @@ export class ReceiptParticipantsController {
   constructor(private readonly participantsService: ParticipantsService) {}
 
   @Get()
-  list(@Param("receiptId") receiptId: string, @Session() session: UserSession) {
-    return this.participantsService.listForReceipt(receiptId, session.user.id);
+  list(@Param("receiptId") receiptId: string, @CurrentUser() user: AppUser) {
+    return this.participantsService.listForReceipt(receiptId, user.id);
   }
 
   @Post()
@@ -56,8 +56,8 @@ export class ReceiptParticipantsController {
   add(
     @Param("receiptId") receiptId: string,
     @Body() dto: AddParticipantDto,
-    @Session() session: UserSession,
+    @CurrentUser() user: AppUser,
   ) {
-    return this.participantsService.add(receiptId, dto, session.user.id);
+    return this.participantsService.add(receiptId, dto, user.id);
   }
 }

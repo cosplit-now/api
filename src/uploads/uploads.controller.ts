@@ -1,6 +1,6 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from "@nestjs/common";
-import { Session } from "@thallesp/nestjs-better-auth";
-import type { UserSession } from "@thallesp/nestjs-better-auth";
+import { CurrentUser } from "../auth/decorators";
+import type { AppUser } from "../auth/auth.types";
 import { UploadsService } from "./uploads.service";
 import { PresignedUrlDto } from "./dto/presigned-url.dto";
 
@@ -10,10 +10,7 @@ export class UploadsController {
 
   @Post("presigned-url")
   @HttpCode(HttpStatus.OK)
-  getPresignedUrl(
-    @Body() dto: PresignedUrlDto,
-    @Session() session: UserSession,
-  ) {
-    return this.uploadsService.getPresignedUrl(dto, session.user.id);
+  getPresignedUrl(@Body() dto: PresignedUrlDto, @CurrentUser() user: AppUser) {
+    return this.uploadsService.getPresignedUrl(dto, user.id);
   }
 }

@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Put } from "@nestjs/common";
-import { Session } from "@thallesp/nestjs-better-auth";
-import type { UserSession } from "@thallesp/nestjs-better-auth";
+import { CurrentUser } from "../auth/decorators";
+import type { AppUser } from "../auth/auth.types";
 import { AllocationsService } from "./allocations.service";
 import { PutAllocationsDto } from "./dto/put-allocations.dto";
 
@@ -9,8 +9,8 @@ export class ReceiptAllocationsController {
   constructor(private readonly allocationsService: AllocationsService) {}
 
   @Get()
-  list(@Param("receiptId") receiptId: string, @Session() session: UserSession) {
-    return this.allocationsService.listForReceipt(receiptId, session.user.id);
+  list(@Param("receiptId") receiptId: string, @CurrentUser() user: AppUser) {
+    return this.allocationsService.listForReceipt(receiptId, user.id);
   }
 }
 
@@ -22,8 +22,8 @@ export class ItemAllocationsController {
   put(
     @Param("id") itemId: string,
     @Body() dto: PutAllocationsDto,
-    @Session() session: UserSession,
+    @CurrentUser() user: AppUser,
   ) {
-    return this.allocationsService.putForItem(itemId, dto, session.user.id);
+    return this.allocationsService.putForItem(itemId, dto, user.id);
   }
 }

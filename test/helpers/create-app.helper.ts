@@ -2,10 +2,16 @@
  * Factory for creating NestJS test applications.
  *
  * Every test app created here has:
- *   - Test user injected via Express middleware (req.session + req.user)
+ *   - Test user injected via Express middleware (req.user)
  *   - URI versioning enabled (matches main.ts future config)
  *   - ValidationPipe enabled globally (whitelist + transform)
  *   - Caller-supplied provider overrides (e.g. S3Service mock)
+ *
+ * Auth strategy:
+ *   Tests import individual feature modules (e.g. UploadsModule), NOT the
+ *   full AppModule, so JwtAuthGuard (registered as APP_GUARD) is never
+ *   loaded. The middleware below sets req.user directly, which is what the
+ *   @CurrentUser() param decorator reads from.
  *
  * Usage:
  *   const app = await createTestApp([UploadsModule], {
@@ -50,21 +56,10 @@ export async function createTestApp(
 
   const app = moduleRef.createNestApplication();
 
-  // Inject test session via middleware BEFORE any route handler runs.
-  //
-  // Why middleware instead of overrideGuard:
-  //   Tests import individual feature modules (e.g. UploadsModule), NOT the
-  //   full AppModule, so AuthModule's global guard is never registered.
-  //   overrideGuard(AuthGuard) would be a no-op. Using middleware guarantees
-  //   that request.session is always populated, which is exactly what the
-  //   @Session() param decorator from @thallesp/nestjs-better-auth reads.
+  // Inject test user via middleware BEFORE any route handler runs.
+  // @CurrentUser() reads req.user, which is set here.
   app.use(
-    (
-      req: Request & { session?: unknown; user?: unknown },
-      _res: Response,
-      next: NextFunction,
-    ) => {
-      req.session = { user: TEST_USER };
+    (req: Request & { user?: unknown }, _res: Response, next: NextFunction) => {
       req.user = TEST_USER;
       next();
     },
