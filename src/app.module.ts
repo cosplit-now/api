@@ -41,6 +41,12 @@ import { LoggingInterceptor } from "./common/interceptors/logging.interceptor";
           SESSION_COOKIE_DOMAIN: configService.get("SESSION_COOKIE_DOMAIN", {
             infer: true,
           }),
+          GOOGLE_CLIENT_ID: configService.get("GOOGLE_CLIENT_ID", {
+            infer: true,
+          }),
+          GOOGLE_CLIENT_SECRET: configService.get("GOOGLE_CLIENT_SECRET", {
+            infer: true,
+          }),
         }),
       }),
     }),

@@ -20,6 +20,8 @@ const envSchema = z.object({
   REDIS_PORT: z.coerce.number().int().positive().default(6379),
   SENTRY_DSN: z.url().optional(),
   GEMINI_API_KEY: z.string().min(1).optional(),
+  GOOGLE_CLIENT_ID: z.string().min(1),
+  GOOGLE_CLIENT_SECRET: z.string().min(1),
 });
 
 export type EnvironmentVariables = z.infer<typeof envSchema>;

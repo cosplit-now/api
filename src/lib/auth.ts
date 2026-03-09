@@ -15,7 +15,10 @@ const parseOriginList = (value: string): string[] =>
 
 type AuthEnvConfig = Pick<
   EnvironmentVariables,
-  "TRUSTED_ORIGINS" | "SESSION_COOKIE_DOMAIN"
+  | "TRUSTED_ORIGINS"
+  | "SESSION_COOKIE_DOMAIN"
+  | "GOOGLE_CLIENT_ID"
+  | "GOOGLE_CLIENT_SECRET"
 >;
 
 export const createAuth = (config: AuthEnvConfig) => {
@@ -35,6 +38,12 @@ export const createAuth = (config: AuthEnvConfig) => {
         }
       : undefined,
     trustedOrigins,
+    socialProviders: {
+      google: {
+        clientId: config.GOOGLE_CLIENT_ID,
+        clientSecret: config.GOOGLE_CLIENT_SECRET,
+      },
+    },
     plugins: [
       anonymous({
         onLinkAccount: ({ anonymousUser, newUser }) => {
