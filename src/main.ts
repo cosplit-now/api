@@ -1,6 +1,11 @@
 import "./instrument";
 import { NestFactory } from "@nestjs/core";
-import { ConsoleLogger, Logger, VersioningType } from "@nestjs/common";
+import {
+  ConsoleLogger,
+  Logger,
+  VERSION_NEUTRAL,
+  VersioningType,
+} from "@nestjs/common";
 import helmet from "helmet";
 import { ConfigService } from "@nestjs/config";
 import { AppModule } from "./app.module";
@@ -36,7 +41,14 @@ async function bootstrap() {
     origin: corsOriginList,
     credentials: true,
   });
-  app.enableVersioning({ type: VersioningType.URI });
+  // defaultVersion: VERSION_NEUTRAL — controllers without an explicit
+  // @Version() decorator (auth, health, s3) are accessible at any version
+  // path as well as the unversioned path.
+  // TODO: change to "1" after demo routes are removed.
+  app.enableVersioning({
+    type: VersioningType.URI,
+    defaultVersion: VERSION_NEUTRAL,
+  });
   const port = configService.get("PORT", { infer: true });
   await app.listen(port);
   logger.log(`Application is running on port ${port}`);
