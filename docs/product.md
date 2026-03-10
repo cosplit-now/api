@@ -15,9 +15,9 @@ Users must sign in before accessing any protected feature. Cosplit uses Google O
 #### Web
 
 1. User clicks "Sign in with Google".
-2. Browser is redirected to `GET /auth/google` → Google consent screen.
+2. Browser is redirected to `GET /v1/auth/google` → Google consent screen.
 3. After granting access, Google redirects back and the server redirects the browser to `<FRONTEND_URL>?code=<exchange_code>`.
-4. Frontend reads `code` from the URL, calls `POST /auth/exchange { code }`, and receives a token pair.
+4. Frontend reads `code` from the URL, calls `POST /v1/auth/exchange { code }`, and receives a token pair.
 5. Store `access_token` and `refresh_token` in persistent local storage (e.g. `localStorage`).
 
 See also: [Auth API](api.md#auth)
@@ -25,7 +25,7 @@ See also: [Auth API](api.md#auth)
 #### Mobile (iOS / Android)
 
 1. Invoke the native Google Sign-In SDK to obtain a Google `id_token`.
-2. Call `POST /auth/google/token { id_token }` → receive a token pair.
+2. Call `POST /v1/auth/google/token { id_token }` → receive a token pair.
 3. Store tokens securely (e.g. iOS Keychain / Android Keystore).
 
 #### Token Management
@@ -36,11 +36,11 @@ All API requests must include the access token:
 Authorization: Bearer <access_token>
 ```
 
-| Scenario                             | Action                                                                                          |
-| ------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| API returns `401`                    | Use `refresh_token` to call `POST /auth/refresh` → store new token pair, retry original request |
-| Refresh token also expired / invalid | Clear tokens, redirect user to sign-in                                                          |
-| User taps "Sign Out"                 | Call `DELETE /auth/session { refresh_token }`, then clear all stored tokens                     |
+| Scenario                             | Action                                                                                             |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| API returns `401`                    | Use `refresh_token` to call `POST /v1/auth/refresh` → store new token pair, retry original request |
+| Refresh token also expired / invalid | Clear tokens, redirect user to sign-in                                                             |
+| User taps "Sign Out"                 | Call `DELETE /v1/auth/session { refresh_token }`, then clear all stored tokens                     |
 
 **Token rotation:** every call to `POST /auth/refresh` issues a new `refresh_token` and immediately revokes the old one. Always persist the latest refresh token.
 

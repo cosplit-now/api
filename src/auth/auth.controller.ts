@@ -21,7 +21,7 @@ import { ExchangeCodeDto } from "./dto/exchange-code.dto";
 import { GoogleTokenDto } from "./dto/google-token.dto";
 import { RefreshTokenDto } from "./dto/refresh-token.dto";
 
-@Controller("auth")
+@Controller({ version: "1", path: "auth" })
 export class AuthController {
   private readonly frontendUrl: string;
 

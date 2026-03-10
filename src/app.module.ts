@@ -3,8 +3,6 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { BullModule } from "@nestjs/bullmq";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { SentryGlobalFilter, SentryModule } from "@sentry/nestjs/setup";
-import { AppController } from "./app.controller";
-import { AppService } from "./app.service";
 import { AttachmentsModule } from "./attachments/attachments.module";
 import { AuthModule } from "./auth/auth.module";
 import { JwtAuthGuard } from "./auth/guards/jwt-auth.guard";
@@ -53,7 +51,6 @@ import { LoggingInterceptor } from "./common/interceptors/logging.interceptor";
     SummaryModule,
     HealthModule,
   ],
-  controllers: [AppController],
   providers: [
     {
       provide: APP_FILTER,
@@ -67,7 +64,6 @@ import { LoggingInterceptor } from "./common/interceptors/logging.interceptor";
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
     },
-    AppService,
   ],
 })
 export class AppModule {}

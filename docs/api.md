@@ -29,7 +29,7 @@ Authorization: Bearer <access_token>
 
 ## Auth
 
-### GET /auth/google
+### GET /v1/auth/google
 
 **Web flow — Step 1.** Redirects the browser to the Google OAuth consent screen. No request body required.
 
@@ -41,7 +41,7 @@ This endpoint is public (no `Authorization` header needed).
 
 ---
 
-### GET /auth/google/callback
+### GET /v1/auth/google/callback
 
 **Web flow — Step 2.** Google redirects here after the user grants access. The server exchanges the Google auth code for a user profile, then issues a short-lived one-time exchange code and redirects the browser to the frontend.
 
@@ -55,7 +55,7 @@ The `exchange_code` is single-use and expires after **5 minutes**.
 
 ---
 
-### POST /auth/exchange
+### POST /v1/auth/exchange
 
 **Web flow — Step 3.** The frontend calls this endpoint to exchange the one-time code (from the callback redirect) for a token pair.
 
@@ -88,7 +88,7 @@ This endpoint is public.
 
 ---
 
-### POST /auth/google/token
+### POST /v1/auth/google/token
 
 **Mobile flow.** Mobile clients obtain a Google ID token via the native Google Sign-In SDK (iOS / Android) and pass it here to receive a token pair directly — no browser redirect required.
 
@@ -102,7 +102,7 @@ This endpoint is public.
 }
 ```
 
-**Response 200** — same `TokenResponse` as `/auth/exchange`
+**Response 200** — same `TokenResponse` as `/v1/auth/exchange`
 
 ```json
 {
@@ -121,7 +121,7 @@ This endpoint is public.
 
 ---
 
-### POST /auth/refresh
+### POST /v1/auth/refresh
 
 Exchange a valid refresh token for a new token pair. The old refresh token is immediately revoked (token rotation).
 
@@ -154,7 +154,7 @@ This endpoint is public.
 
 ---
 
-### DELETE /auth/session
+### DELETE /v1/auth/session
 
 Revoke the current refresh token (logout). The client should also discard both tokens from local storage.
 
@@ -172,7 +172,7 @@ This endpoint is public (no access token required — the refresh token itself i
 
 ---
 
-### GET /auth/me
+### GET /v1/auth/me
 
 Return the currently authenticated user.
 
