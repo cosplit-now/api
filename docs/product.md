@@ -15,10 +15,15 @@ Users must sign in before accessing any protected feature. Cosplit uses Google O
 #### Web
 
 1. User clicks "Sign in with Google".
-2. Browser is redirected to `GET /v1/auth/google` → Google consent screen.
-3. After granting access, Google redirects back and the server redirects the browser to `<FRONTEND_URL>?code=<exchange_code>`.
+2. Frontend redirects browser to `GET /v1/auth/google?redirect_uri=<frontend_callback_url>&state=<opaque_state>`.
+3. After granting access, Google redirects back and the server redirects browser to `<frontend_callback_url>?code=<exchange_code>&state=<opaque_state>`.
 4. Frontend reads `code` from the URL, calls `POST /v1/auth/exchange { code }`, and receives a token pair.
 5. Store `access_token` and `refresh_token` in persistent local storage (e.g. `localStorage`).
+
+Recommended callback URLs:
+
+- Development: `https://localhost:5173/auth/callback`
+- Production: `https://cosplit.xinqi.mu/auth/callback`
 
 See also: [Auth API](api.md#auth)
 
@@ -42,7 +47,7 @@ Authorization: Bearer <access_token>
 | Refresh token also expired / invalid | Clear tokens, redirect user to sign-in                                                             |
 | User taps "Sign Out"                 | Call `DELETE /v1/auth/session { refresh_token }`, then clear all stored tokens                     |
 
-**Token rotation:** every call to `POST /auth/refresh` issues a new `refresh_token` and immediately revokes the old one. Always persist the latest refresh token.
+**Token rotation:** every call to `POST /v1/auth/refresh` issues a new `refresh_token` and immediately revokes the old one. Always persist the latest refresh token.
 
 ---
 

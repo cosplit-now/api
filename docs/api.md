@@ -31,9 +31,18 @@ Authorization: Bearer <access_token>
 
 ### GET /v1/auth/google
 
-**Web flow — Step 1.** Redirects the browser to the Google OAuth consent screen. No request body required.
+**Web flow — Step 1.** Redirects the browser to the Google OAuth consent screen.
 
 This endpoint is public (no `Authorization` header needed).
+
+**Query Parameters**
+
+| Parameter      | Type   | Required | Description                                                          |
+| -------------- | ------ | -------- | -------------------------------------------------------------------- |
+| `redirect_uri` | string | Yes      | Frontend callback URL (exact match against server allowlist)         |
+| `state`        | string | No       | Opaque client state. Will be returned unchanged in callback redirect |
+
+Allowed `redirect_uri` values are configured on the server via `FRONTEND_CALLBACK_ALLOWLIST`.
 
 ```
 302 → https://accounts.google.com/o/oauth2/v2/auth?...
@@ -43,15 +52,17 @@ This endpoint is public (no `Authorization` header needed).
 
 ### GET /v1/auth/google/callback
 
-**Web flow — Step 2.** Google redirects here after the user grants access. The server exchanges the Google auth code for a user profile, then issues a short-lived one-time exchange code and redirects the browser to the frontend.
+**Web flow — Step 2.** Google redirects here after the user grants access. The server exchanges the Google auth code for a user profile, then issues a short-lived one-time exchange code and redirects the browser to the frontend callback URL from `redirect_uri`.
 
 This endpoint is public and handled automatically by Passport — clients should not call it directly.
 
 ```
-302 → <FRONTEND_URL>?code=<exchange_code>
+302 → <redirect_uri>?code=<exchange_code>&state=<original_state>
 ```
 
 The `exchange_code` is single-use and expires after **5 minutes**.
+
+If `state` was omitted in Step 1, the redirect only includes `code`.
 
 ---
 

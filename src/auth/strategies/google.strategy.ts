@@ -15,10 +15,16 @@ export class GoogleStrategy extends PassportStrategy(Strategy, "google") {
     private readonly authService: AuthService,
     configService: ConfigService<EnvironmentVariables, true>,
   ) {
+    const apiBaseUrl = configService.get("API_BASE_URL", { infer: true });
+    const callbackUrl = new URL(
+      "/v1/auth/google/callback",
+      apiBaseUrl,
+    ).toString();
+
     super({
       clientID: configService.get("GOOGLE_CLIENT_ID", { infer: true }),
       clientSecret: configService.get("GOOGLE_CLIENT_SECRET", { infer: true }),
-      callbackURL: configService.get("GOOGLE_CALLBACK_URL", { infer: true }),
+      callbackURL: callbackUrl,
       scope: ["email", "profile"],
     });
   }

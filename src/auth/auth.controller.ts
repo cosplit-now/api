@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -6,41 +7,34 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Req,
   Res,
   UnauthorizedException,
   UseGuards,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import { AuthGuard } from "@nestjs/passport";
-import type { Response } from "express";
-import type { EnvironmentVariables } from "../config/env.schema";
+import type { Request, Response } from "express";
 import { CurrentUser, Public } from "./decorators";
 import type { AppUser } from "./auth.types";
 import { AuthService } from "./auth.service";
 import { ExchangeCodeDto } from "./dto/exchange-code.dto";
 import { GoogleTokenDto } from "./dto/google-token.dto";
 import { RefreshTokenDto } from "./dto/refresh-token.dto";
+import { GoogleAuthGuard } from "./guards/google-auth.guard";
 
 @Controller({ version: "1", path: "auth" })
 export class AuthController {
-  private readonly frontendUrl: string;
-
-  constructor(
-    private readonly authService: AuthService,
-    configService: ConfigService<EnvironmentVariables, true>,
-  ) {
-    this.frontendUrl = configService.get("FRONTEND_URL", { infer: true });
-  }
+  constructor(private readonly authService: AuthService) {}
 
   // ── Web OAuth flow ────────────────────────────────────────────────────────
 
   /**
    * Step 1: Redirect user to Google consent screen.
-   * GET /auth/google
+   * GET /v1/auth/google?redirect_uri=<frontend_callback_url>&state=<opaque>
    */
   @Get("google")
   @Public()
-  @UseGuards(AuthGuard("google"))
+  @UseGuards(GoogleAuthGuard)
   googleLogin() {
     // Passport redirects to Google — this method body never executes.
   }
@@ -48,20 +42,38 @@ export class AuthController {
   /**
    * Step 2: Google redirects back here with an auth code.
    * Passport exchanges it for the user profile, then we issue a short-lived
-   * one-time exchange code and redirect the browser to the frontend.
-   * GET /auth/google/callback
+   * one-time exchange code and redirect the browser to redirect_uri from the
+   * verified OAuth state payload.
+   * GET /v1/auth/google/callback
    */
   @Get("google/callback")
   @Public()
   @UseGuards(AuthGuard("google"))
-  googleCallback(@CurrentUser() user: AppUser, @Res() res: Response) {
+  googleCallback(
+    @CurrentUser() user: AppUser,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const serializedState = this.getSingleQueryParam(req, "state");
+    if (!serializedState) {
+      throw new UnauthorizedException("Missing OAuth state");
+    }
+
+    const { redirectUri, state } =
+      this.authService.consumeOAuthState(serializedState);
     const code = this.authService.generateExchangeCode(user.id);
-    res.redirect(`${this.frontendUrl}?code=${code}`);
+    const callbackUrl = new URL(redirectUri);
+    callbackUrl.searchParams.set("code", code);
+    if (state !== undefined) {
+      callbackUrl.searchParams.set("state", state);
+    }
+
+    res.redirect(callbackUrl.toString());
   }
 
   /**
    * Step 3 (web): Frontend exchanges the one-time code for tokens.
-   * POST /auth/exchange
+   * POST /v1/auth/exchange
    * Body: { code: string }
    * Response: TokenResponse
    */
@@ -69,6 +81,10 @@ export class AuthController {
   @Public()
   @HttpCode(HttpStatus.OK)
   async exchange(@Body() dto: ExchangeCodeDto) {
+    if (!dto?.code) {
+      throw new BadRequestException("code is required");
+    }
+
     const userId = this.authService.consumeExchangeCode(dto.code);
     if (!userId) throw new UnauthorizedException("Invalid or expired code");
     return this.authService.generateTokens(userId);
@@ -79,7 +95,7 @@ export class AuthController {
   /**
    * Mobile clients call this with a Google ID token obtained via the
    * native Google Sign-In SDK (iOS / Android).
-   * POST /auth/google/token
+   * POST /v1/auth/google/token
    * Body: { id_token: string }
    * Response: TokenResponse
    */
@@ -96,7 +112,7 @@ export class AuthController {
 
   /**
    * Refresh an expired access token using a valid refresh token.
-   * POST /auth/refresh
+   * POST /v1/auth/refresh
    * Body: { refresh_token: string }
    * Response: TokenResponse (new access_token + rotated refresh_token)
    */
@@ -109,7 +125,7 @@ export class AuthController {
 
   /**
    * Revoke the current refresh token (logout).
-   * DELETE /auth/session
+   * DELETE /v1/auth/session
    * Body: { refresh_token: string }
    */
   @Delete("session")
@@ -123,10 +139,23 @@ export class AuthController {
 
   /**
    * Return the currently authenticated user.
-   * GET /auth/me
+   * GET /v1/auth/me
    */
   @Get("me")
   me(@CurrentUser() user: AppUser) {
     return user;
+  }
+
+  private getSingleQueryParam(req: Request, key: string): string | undefined {
+    const value = req.query[key];
+    if (Array.isArray(value)) {
+      throw new UnauthorizedException(`Invalid OAuth ${key}`);
+    }
+
+    if (typeof value !== "string") {
+      return undefined;
+    }
+
+    return value;
   }
 }

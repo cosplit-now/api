@@ -1,5 +1,10 @@
 import { createHash, randomBytes } from "crypto";
-import { Injectable, Logger, UnauthorizedException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import { OAuth2Client } from "google-auth-library";
@@ -15,13 +20,18 @@ interface OAuthProfile {
   picture?: string;
 }
 
+interface OAuthStatePayload {
+  redirectUri: string;
+  state?: string;
+}
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   /**
    * Short-lived single-use codes issued after Google OAuth callback.
-   * The web client exchanges this code for tokens via POST /auth/exchange.
+   * The web client exchanges this code for tokens via POST /v1/auth/exchange.
    * TTL: 5 minutes. For multi-instance deployments, replace with Redis.
    */
   private readonly exchangeCodes = new Map<
@@ -31,6 +41,7 @@ export class AuthService {
 
   private readonly refreshTokenExpiresDays: number;
   private readonly googleClientId: string;
+  private readonly frontendCallbackAllowlist: Set<string>;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -44,6 +55,11 @@ export class AuthService {
     this.googleClientId = configService.get("GOOGLE_CLIENT_ID", {
       infer: true,
     });
+    this.frontendCallbackAllowlist = this.parseFrontendCallbackAllowlist(
+      configService.get("FRONTEND_CALLBACK_ALLOWLIST", {
+        infer: true,
+      }),
+    );
   }
 
   // ── User ──────────────────────────────────────────────────────────────────
@@ -201,6 +217,55 @@ export class AuthService {
     return entry.userId;
   }
 
+  generateOAuthState(redirectUri: string, state?: string): string {
+    if (state && state.length > 1024) {
+      throw new BadRequestException("state must be at most 1024 characters");
+    }
+
+    const normalizedRedirectUri = this.validateRedirectUri(
+      redirectUri,
+      (message) => new BadRequestException(message),
+    );
+
+    const payload: OAuthStatePayload = {
+      redirectUri: normalizedRedirectUri,
+      state,
+    };
+
+    return this.jwtService.sign(payload, { expiresIn: "10m" });
+  }
+
+  consumeOAuthState(serializedState: string): OAuthStatePayload {
+    let payload: unknown;
+    try {
+      payload = this.jwtService.verify(serializedState);
+    } catch {
+      throw new UnauthorizedException("Invalid or expired OAuth state");
+    }
+
+    if (!payload || typeof payload !== "object") {
+      throw new UnauthorizedException("Invalid OAuth state payload");
+    }
+
+    const redirectUri = (payload as { redirectUri?: unknown }).redirectUri;
+    const state = (payload as { state?: unknown }).state;
+
+    if (typeof redirectUri !== "string") {
+      throw new UnauthorizedException("Invalid OAuth state payload");
+    }
+    if (state !== undefined && typeof state !== "string") {
+      throw new UnauthorizedException("Invalid OAuth state payload");
+    }
+
+    return {
+      redirectUri: this.validateRedirectUri(
+        redirectUri,
+        (message) => new UnauthorizedException(message),
+      ),
+      state,
+    };
+  }
+
   // ── Mobile: verify Google ID token ───────────────────────────────────────
 
   async verifyGoogleIdToken(idToken: string): Promise<OAuthProfile> {
@@ -244,5 +309,56 @@ export class AuthService {
       d: 86400,
     };
     return n * (multipliers[unit] ?? 1);
+  }
+
+  private parseFrontendCallbackAllowlist(raw: string): Set<string> {
+    const urls = raw
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean)
+      .map((value) =>
+        this.normalizeCallbackUrl(
+          value,
+          (message) =>
+            new Error(`Invalid FRONTEND_CALLBACK_ALLOWLIST: ${message}`),
+        ),
+      );
+
+    if (urls.length === 0) {
+      throw new Error(
+        "Invalid FRONTEND_CALLBACK_ALLOWLIST: at least one URL is required",
+      );
+    }
+
+    return new Set(urls);
+  }
+
+  private validateRedirectUri(
+    redirectUri: string,
+    buildError: (message: string) => Error,
+  ): string {
+    const normalized = this.normalizeCallbackUrl(redirectUri, buildError);
+    if (!this.frontendCallbackAllowlist.has(normalized)) {
+      throw buildError("redirect_uri is not allowed");
+    }
+    return normalized;
+  }
+
+  private normalizeCallbackUrl(
+    value: string,
+    buildError: (message: string) => Error,
+  ): string {
+    let parsed: URL;
+    try {
+      parsed = new URL(value);
+    } catch {
+      throw buildError("redirect_uri must be a valid absolute URL");
+    }
+
+    if (parsed.search || parsed.hash) {
+      throw buildError("redirect_uri must not include query or hash");
+    }
+
+    return parsed.toString();
   }
 }

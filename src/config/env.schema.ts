@@ -12,8 +12,8 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default("1h"),
   REFRESH_TOKEN_EXPIRES_DAYS: z.coerce.number().int().positive().default(30),
   // Google OAuth
-  GOOGLE_CALLBACK_URL: z.url(),
-  FRONTEND_URL: z.url(),
+  API_BASE_URL: z.url(),
+  FRONTEND_CALLBACK_ALLOWLIST: z.string().min(1),
   R2_ACCOUNT_ID: z.string().min(1),
   R2_ACCESS_KEY_ID: z.string().min(1),
   R2_SECRET_ACCESS_KEY: z.string().min(1),

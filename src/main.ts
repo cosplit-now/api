@@ -15,9 +15,7 @@ import { EnvironmentVariables } from "./config/env.schema";
 async function bootstrap() {
   const isProduction = process.env.NODE_ENV === "production";
 
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    bodyParser: false,
-  });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.useLogger(
     new ConsoleLogger({
