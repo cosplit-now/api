@@ -1,3 +1,15 @@
+import { IsDateString, IsOptional, IsString } from "class-validator";
+
 export class UpdateReceiptDto {
-  finalResult: object;
+  @IsOptional()
+  @IsString()
+  storeName?: string;
+
+  @IsOptional()
+  @IsString()
+  storeAddress?: string;
+
+  @IsOptional()
+  @IsDateString()
+  receiptDate?: string;
 }

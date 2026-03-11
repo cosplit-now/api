@@ -15,70 +15,48 @@ datasource db {
 }
 
 model User {
-  id            String    @id
+  id            String   @id @default(cuid())
   name          String
-  email         String
-  emailVerified Boolean   @default(false)
+  email         String   @unique
+  emailVerified Boolean  @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  isAnonymous Boolean? @default(false)
+  receipts      Receipt[]
+  demoReceipts  DemoReceipt[]
+  attachments   ReceiptAttachment[]
+  refreshTokens RefreshToken[]
+  oauthAccounts OAuthAccount[]
 
-  demoReceipts DemoReceipt[]
-
-  @@unique([email])
   @@map("user")
 }
 
-model Session {
-  id        String   @id
-  expiresAt DateTime
-  token     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  ipAddress String?
-  userAgent String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+model OAuthAccount {
+  id                String   @id @default(cuid())
+  provider          String
+  providerAccountId String
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
 
-  @@unique([token])
+  @@unique([provider, providerAccountId])
   @@index([userId])
-  @@map("session")
+  @@map("oauth_account")
 }
 
-model Account {
-  id                    String    @id
-  accountId             String
-  providerId            String
-  userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String?
-  refreshToken          String?
-  idToken               String?
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
-  scope                 String?
-  password              String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-
-  @@index([userId])
-  @@map("account")
-}
-
-model Verification {
-  id         String   @id
-  identifier String
-  value      String
+model RefreshToken {
+  id         String    @id @default(cuid())
+  tokenHash  String    @unique
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  revokedAt  DateTime?
+  replacedBy String?
+  createdAt  DateTime  @default(now())
 
-  @@index([identifier])
-  @@map("verification")
+  @@index([userId])
+  @@map("refresh_token")
 }
 
 // uploaded | ocr_processing | ocr_done | ocr_failed | confirme
@@ -97,9 +75,145 @@ model DemoReceipt {
   ocrResult   Json?
   finalResult Json?
 
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Receipt {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  storeName    String?
+  storeAddress String?
+  receiptDate  DateTime?
+
+  subtotal    Decimal? @db.Decimal(14, 2)
+  discount    Decimal? @db.Decimal(14, 2)
+  taxAmount   Decimal? @db.Decimal(14, 2)
+  totalAmount Decimal? @db.Decimal(14, 2)
+
+  ocrResult Json?
+  ocrStatus OcrStatus @default(pending)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attachments  ReceiptAttachment[]
+  items        ReceiptItem[]
+  participants Participant[]
+  allocations  Allocation[]
+
+  @@index([userId])
+  @@map("receipt")
+}
+
+enum OcrStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+model ReceiptAttachment {
+  id String @id @default(cuid())
+
+  key          String
+  bucket       String
+  url          String
+  contentType  String?
+  sizeBytes    Int?
+  originalName String?
+
+  sortOrder Int              @default(0)
+  notes     String?
+  status    AttachmentStatus @default(pending)
+  expiresAt DateTime?
+
+  receiptId String?
+  receipt   Receipt? @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([receiptId])
+  @@index([userId])
+  @@map("receipt_attachment")
+}
+
+model ReceiptItem {
+  id          String   @id @default(cuid())
+  name        String
+  quantity    Int      @default(1)
+  unitPrice   Decimal  @db.Decimal(14, 2)
+  totalPrice  Decimal  @db.Decimal(14, 2)
+  discount    Decimal? @db.Decimal(14, 2)
+  description String?
+  category    String?
+  sortOrder   Int      @default(0)
+  taxExempt   Boolean  @default(false)
+  rawData     Json?
+
+  receiptId String
+  receipt   Receipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+
+  allocations Allocation[]
+
+  @@index([receiptId])
+  @@map("receipt_item")
+}
+
+model Participant {
+  id      String  @id @default(cuid())
+  name    String
+  isPayer Boolean @default(false)
+
+  receiptId String
+  receipt   Receipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime     @default(now())
+  allocations Allocation[]
+
+  @@index([receiptId])
+  @@map("participant")
+}
+
+model Allocation {
+  id            String         @id @default(cuid())
+  type          AllocationType
+  participantId String
+  participant   Participant    @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  receiptItemId String
+  receiptItem   ReceiptItem    @relation(fields: [receiptItemId], references: [id], onDelete: Cascade)
+  receiptId     String
+  receipt       Receipt        @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+
+  value  Decimal @db.Decimal(14, 2)
+  amount Decimal @db.Decimal(14, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([participantId, receiptItemId])
+  @@index([receiptId])
+  @@index([participantId])
+  @@map("allocation")
+}
+
+enum AllocationType {
+  equal
+  shares
+  custom
+}
+
+enum AttachmentStatus {
+  pending
+  attached
+  expired
 }

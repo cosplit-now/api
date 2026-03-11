@@ -1,6 +1,8 @@
 import { Test, TestingModule } from "@nestjs/testing";
+import { getQueueToken } from "@nestjs/bullmq";
 import { ReceiptsController } from "./receipts.controller";
 import { ReceiptsService } from "./receipts.service";
+import { PrismaService } from "../prisma/prisma.service";
 
 describe("ReceiptsController", () => {
   let controller: ReceiptsController;
@@ -8,7 +10,17 @@ describe("ReceiptsController", () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ReceiptsController],
-      providers: [ReceiptsService],
+      providers: [
+        ReceiptsService,
+        {
+          provide: PrismaService,
+          useValue: {},
+        },
+        {
+          provide: getQueueToken("receipt"),
+          useValue: { add: vi.fn() },
+        },
+      ],
     }).compile();
 
     controller = module.get<ReceiptsController>(ReceiptsController);

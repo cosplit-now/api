@@ -1,0 +1,27 @@
+services:
+  postgres-test:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: cosplit-api-test
+    ports:
+      - "55432:5432"
+    volumes:
+      - postgres_data_test:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cosplit-api-test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis-test:
+    image: valkey/valkey:8
+    ports:
+      - "56379:6379"
+    volumes:
+      - redis_data_test:/data
+
+volumes:
+  postgres_data_test:
+  redis_data_test:

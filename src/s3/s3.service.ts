@@ -1,25 +1,38 @@
 import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
+  HeadBucketCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { type EnvironmentVariables } from "../config/env.schema";
+
+const R2_PUBLIC_BASE_URL =
+  "https://pub-e6cf3f9edbf4434eaf774e9c2e311141.r2.dev";
 
 @Injectable()
 export class S3Service {
   private readonly client: S3Client;
-  private readonly bucket: string;
-  private readonly publicBaseUrl: string;
+  readonly bucket: string;
 
-  constructor() {
-    const accountId = process.env.R2_ACCOUNT_ID;
-    const accessKeyId = process.env.R2_ACCESS_KEY_ID;
-    const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
-    this.bucket = process.env.R2_BUCKET || "receipt-images";
-    this.publicBaseUrl = process.env.R2_PUBLIC_BASE_URL || "";
-
+  constructor(
+    private readonly configService: ConfigService<EnvironmentVariables, true>,
+  ) {
+    const accountId = this.configService.get("R2_ACCOUNT_ID", {
+      infer: true,
+    });
+    const accessKeyId = this.configService.get("R2_ACCESS_KEY_ID", {
+      infer: true,
+    });
+    const secretAccessKey = this.configService.get("R2_SECRET_ACCESS_KEY", {
+      infer: true,
+    });
+    this.bucket = this.configService.get("R2_BUCKET", {
+      infer: true,
+    });
     if (!accountId || !accessKeyId || !secretAccessKey) {
       throw new Error("R2 credentials not configured");
     }
@@ -32,24 +45,6 @@ export class S3Service {
         secretAccessKey,
       },
     });
-  }
-
-  // 弃用
-  async uploadImage(
-    key: string,
-    body: Buffer,
-    contentType: string,
-  ): Promise<string> {
-    const command = new PutObjectCommand({
-      Bucket: this.bucket,
-      Key: key,
-      Body: body,
-      ContentType: contentType,
-    });
-
-    await this.client.send(command);
-
-    return this.getPublicUrl(key);
   }
 
   // 生成用于上传的签名 URL
@@ -81,11 +76,16 @@ export class S3Service {
     await this.client.send(command);
   }
 
+  async ping(): Promise<void> {
+    const command = new HeadBucketCommand({
+      Bucket: this.bucket,
+    });
+
+    await this.client.send(command);
+  }
+
   getPublicUrl(key: string): string {
-    if (this.publicBaseUrl) {
-      return `${this.publicBaseUrl}/${key}`;
-    }
-    const accountId = process.env.R2_ACCOUNT_ID;
-    return `https://${accountId}.r2.cloudflarestorage.com/${this.bucket}/${key}`;
+    const normalizedKey = key.startsWith("/") ? key.slice(1) : key;
+    return `${R2_PUBLIC_BASE_URL}/${normalizedKey}`;
   }
 }
