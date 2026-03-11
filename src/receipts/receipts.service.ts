@@ -171,7 +171,10 @@ export class ReceiptsService {
     const firstAttachment = attachmentMap.get(attachmentIds[0])!;
     await this.receiptQueue.add(
       "v1-ocr",
-      { receiptId: receipt.id, imageUrl: firstAttachment.url },
+      {
+        receiptId: receipt.id,
+        imageKey: firstAttachment.key,
+      },
       { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
     );
 
@@ -240,7 +243,10 @@ export class ReceiptsService {
 
     await this.receiptQueue.add(
       "v1-ocr",
-      { receiptId: id, imageUrl: attachment?.url ?? "" },
+      {
+        receiptId: id,
+        imageKey: attachment?.key,
+      },
       { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
     );
 

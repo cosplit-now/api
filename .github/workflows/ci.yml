@@ -43,7 +43,6 @@ jobs:
       R2_ACCESS_KEY_ID: test
       R2_SECRET_ACCESS_KEY: test
       R2_BUCKET: test-bucket
-      R2_PUBLIC_BASE_URL: https://test-r2.example.com
 
     steps:
       - name: Checkout

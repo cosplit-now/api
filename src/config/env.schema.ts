@@ -18,7 +18,6 @@ const envSchema = z.object({
   R2_ACCESS_KEY_ID: z.string().min(1),
   R2_SECRET_ACCESS_KEY: z.string().min(1),
   R2_BUCKET: z.string().min(1),
-  R2_PUBLIC_BASE_URL: z.url().optional(),
   REDIS_HOST: z.string().min(1),
   REDIS_PORT: z.coerce.number().int().positive().default(6379),
   SENTRY_DSN: z.url().optional(),

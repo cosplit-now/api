@@ -55,7 +55,6 @@ R2_ACCOUNT_ID=dev
 R2_ACCESS_KEY_ID=dev
 R2_SECRET_ACCESS_KEY=dev
 R2_BUCKET=dev-bucket
-R2_PUBLIC_BASE_URL=https://dev-r2.example.com
 ```
 
 For tests, `.env.test` is already defined and uses local ports:

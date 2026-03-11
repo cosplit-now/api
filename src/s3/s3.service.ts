@@ -10,12 +10,13 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { type EnvironmentVariables } from "../config/env.schema";
 
+const R2_PUBLIC_BASE_URL =
+  "https://pub-e6cf3f9edbf4434eaf774e9c2e311141.r2.dev";
+
 @Injectable()
 export class S3Service {
   private readonly client: S3Client;
-  private readonly accountId: string;
   readonly bucket: string;
-  private readonly publicBaseUrl?: string;
 
   constructor(
     private readonly configService: ConfigService<EnvironmentVariables, true>,
@@ -32,11 +33,6 @@ export class S3Service {
     this.bucket = this.configService.get("R2_BUCKET", {
       infer: true,
     });
-    this.publicBaseUrl = this.configService.get("R2_PUBLIC_BASE_URL", {
-      infer: true,
-    });
-    this.accountId = accountId;
-
     if (!accountId || !accessKeyId || !secretAccessKey) {
       throw new Error("R2 credentials not configured");
     }
@@ -49,24 +45,6 @@ export class S3Service {
         secretAccessKey,
       },
     });
-  }
-
-  // 弃用
-  async uploadImage(
-    key: string,
-    body: Buffer,
-    contentType: string,
-  ): Promise<string> {
-    const command = new PutObjectCommand({
-      Bucket: this.bucket,
-      Key: key,
-      Body: body,
-      ContentType: contentType,
-    });
-
-    await this.client.send(command);
-
-    return this.getPublicUrl(key);
   }
 
   // 生成用于上传的签名 URL
@@ -107,9 +85,7 @@ export class S3Service {
   }
 
   getPublicUrl(key: string): string {
-    if (this.publicBaseUrl) {
-      return `${this.publicBaseUrl}/${key}`;
-    }
-    return `https://${this.accountId}.r2.cloudflarestorage.com/${this.bucket}/${key}`;
+    const normalizedKey = key.startsWith("/") ? key.slice(1) : key;
+    return `${R2_PUBLIC_BASE_URL}/${normalizedKey}`;
   }
 }

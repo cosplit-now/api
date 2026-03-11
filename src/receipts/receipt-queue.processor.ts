@@ -3,17 +3,25 @@ import { Logger } from "@nestjs/common";
 import { Job } from "bullmq";
 import { extractReceiptItems } from "receipt-ocr";
 import { PrismaService } from "src/prisma/prisma.service";
+import { S3Service } from "src/s3/s3.service";
 
 @Processor("receipt")
 export class ReceiptQueueProcessor extends WorkerHost {
   private readonly logger = new Logger(ReceiptQueueProcessor.name);
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly s3Service: S3Service,
+  ) {
     super();
   }
 
   async process(
-    job: Job<{ receiptId: string; imageUrl: string }, any, string>,
+    job: Job<
+      { receiptId: string; imageUrl?: string; imageKey?: string },
+      any,
+      string
+    >,
   ): Promise<any> {
     if (job.name === "ocr") {
       const { receiptId } = job.data;
@@ -35,8 +43,14 @@ export class ReceiptQueueProcessor extends WorkerHost {
         where: { id: receiptId },
         data: { status: "ocr_processing" },
       });
+
+      const imageUrl = job.data.imageUrl;
+      if (!imageUrl) {
+        throw new Error("Missing image URL for demo OCR job");
+      }
+
       try {
-        const receiptItems = await extractReceiptItems(job.data.imageUrl);
+        const receiptItems = await extractReceiptItems(imageUrl);
         await this.prisma.demoReceipt.update({
           where: { id: receiptId },
           data: { status: "ocr_done", ocrResult: JSON.stringify(receiptItems) },
@@ -73,8 +87,18 @@ export class ReceiptQueueProcessor extends WorkerHost {
         where: { id: receiptId },
         data: { ocrStatus: "processing" },
       });
+
+      const imageUrl =
+        job.data.imageKey && !job.data.imageUrl
+          ? await this.s3Service.getDownloadUrl(job.data.imageKey)
+          : job.data.imageUrl;
+
+      if (!imageUrl) {
+        throw new Error("Missing image URL for OCR job");
+      }
+
       try {
-        const receiptItems = await extractReceiptItems(job.data.imageUrl);
+        const receiptItems = await extractReceiptItems(imageUrl);
         await this.prisma.receipt.update({
           where: { id: receiptId },
           data: {
